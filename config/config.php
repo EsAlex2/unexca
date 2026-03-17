@@ -1,7 +1,7 @@
 <?php 
 //config/config.php
 $db_server = "localhost";
-$db_name = "admin_sql";
+$db_name = "postgres";
 $db_user = "postgres";
 $db_password = "qwerty2801**";
 $db_port = 5432;
