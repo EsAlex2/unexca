@@ -8,5 +8,5 @@ $db_port = 5432;
 $db_database = "pgsql";
 
 // URL base
-define('BASE_URL', '/unexca');
+
 
