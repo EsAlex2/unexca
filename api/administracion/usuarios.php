@@ -27,7 +27,7 @@ switch ($method) {
                 /*
                 creamos un query para buscar y mostrar el usuario almacenado en base de datos mientras exista el id del usuario y mostrar el usuario seleccionado.
                 */
-                $stmt = $pdo->prepare("SELECT id_usuario, cedula, nombres, apellidos, correo_institucional, activo, ultimo_login, creado_en 
+                $stmt = $pdo->prepare("SELECT id_usuario, cedula, nombres, apellidos, correo_institucional, id_tipo,activo,ultimo_login, creado_en 
                                        FROM unexca_db.usuarios 
                                        WHERE id_usuario = :id");
 
@@ -36,7 +36,7 @@ switch ($method) {
                 /*
                 si existe el usuario(seleccionado por el id), muestralo sino mostrar un mensaje que diga: "usuario no encontrado".
                 */
-                if ($usuario) { 
+                if ($usuario) {
                     echo json_encode($usuario);
                 } else {
                     http_response_code(404);
@@ -47,8 +47,8 @@ switch ($method) {
                 sino ha sido seleccionado el id del usuario, muestrame todos los usuarios almacenados en la base de datos.
                 */
 
-            } else { 
-                $stmt = $pdo->query("SELECT id_usuario, cedula, nombres, apellidos, correo_institucional, activo, ultimo_login, creado_en FROM unexca_db.usuarios");
+            } else {
+                $stmt = $pdo->query("SELECT id_usuario, cedula, nombres, apellidos, correo_institucional, id_tipo, activo, ultimo_login, creado_en FROM unexca_db.usuarios");
                 $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 echo json_encode($usuarios);
             }
@@ -58,7 +58,7 @@ switch ($method) {
             */
             http_response_code(500);
             echo json_encode([
-                "error" => "Error de base de datos", 
+                "error" => "Error de base de datos",
                 "detalles" => $e->getMessage()
             ]);
         }
@@ -73,26 +73,6 @@ switch ($method) {
             */
             $json = file_get_contents('php://input');
             $input = json_decode($json, true);
-
-            /*
-            verificamos si cuando el usuario envia la informacion desde el formulario, esta enviando espacios 
-            en blanco.
-            */
-
-            $cedula = isset($input['cedula']) ? trim($input['cedula']) : '';
-            $nombres = isset($input['nombres']) ? trim($input['nombres']) : '';
-            $email = isset($input['correo_institucional']) ? trim($input['correo_institucional']) : '';
-            $pass = isset($input['password_hash']) ? $input['password_hash'] : '';
-            
-            /*
-            si los campos cedula, email o la contraseña esta vacio, mostrara un mensaje indicando que esta faltando 
-            un campo o que el mismo esta vacio.
-            */
-            if (empty($cedula) || empty($email) || empty($pass)) {
-                http_response_code(400);
-                echo json_encode(["error" => "Faltan campos obligatorios o están vacíos."]);
-                exit;
-            }
 
             /*
             posteriormente, iteramos en los campos atraves de un array para verificar cual es el campo que esta vacio
@@ -121,13 +101,13 @@ switch ($method) {
             /*
             añadimos un
             */
-    
+
             if (strlen($input['password_hash']) < 8) {
                 http_response_code(400);
                 echo json_encode(["error" => "La contraseña debe tener al menos 8 caracteres."]);
                 exit;
             }
-            
+
             $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.usuarios WHERE cedula = :c OR correo_institucional = :e");
             $checkStmt->execute(['c' => $input['cedula'], 'e' => $input['correo_institucional']]);
             if ($checkStmt->fetchColumn() > 0) {
@@ -162,6 +142,7 @@ switch ($method) {
 
     case "PUT":
 
+
         $input = json_decode(file_get_contents('php://input'), true);
 
         $id_usuario = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
@@ -176,15 +157,22 @@ switch ($method) {
         $checkExist->execute(['id' => $id_usuario]);
         if (!$checkExist->fetch()) {
             http_response_code(404);
-            echo json_encode(["error" => "El usuario no existe"]);
+            echo json_encode(["error" => "Usuario no encontrado"]);
             break;
         }
 
-        if (empty($input['cedula']) || empty($input['nombres']) || empty($input['correo_institucional'])) {
-            http_response_code(400);
-            echo json_encode(["error" => "Faltan datos obligatorios (cedula, nombres, correo_institucional)"]);
-            break;
+
+        $camposRequeridos = ['id_tipo', 'cedula', 'nombres', 'apellidos', 'correo_institucional'];
+
+        foreach ($camposRequeridos as $campo) {
+            if (!isset($input[$campo]) || strlen(trim((string) $input[$campo])) === 0) {
+                http_response_code(400);
+                echo json_encode(["error" => "El campo '$campo' es obligatorio."]);
+                exit;
+            }
         }
+
+
 
         $checkDup = $pdo->prepare("SELECT id_usuario FROM unexca_db.usuarios 
                                    WHERE (cedula = :c OR correo_institucional = :e) 
@@ -194,6 +182,7 @@ switch ($method) {
             'e' => $input['correo_institucional'],
             'id' => $id_usuario
         ]);
+
         if ($checkDup->fetch()) {
             http_response_code(409);
             echo json_encode(["error" => "La cédula o el correo ya están en uso por otro usuario"]);
@@ -209,7 +198,8 @@ switch ($method) {
                     SET cedula = :cedula, 
                         nombres = :nombres, 
                         apellidos = :apellidos, 
-                        correo_institucional = :correo" .
+                        correo_institucional = :correo, 
+                        id_tipo = :tipo" .
                 ($pass_to_update ? ", password_hash = :pass" : "") . " 
                     WHERE id_usuario = :id";
 
@@ -218,6 +208,7 @@ switch ($method) {
                 'nombres' => trim($input['nombres']),
                 'apellidos' => trim($input['apellidos']),
                 'correo' => trim($input['correo_institucional']),
+                'tipo' => $input['id_tipo'],
                 'id' => $id_usuario
             ];
 
@@ -265,7 +256,7 @@ switch ($method) {
             ]);
 
         } catch (PDOException $e) {
-            if ($e->getCode() == '23503') { 
+            if ($e->getCode() == '23503') {
                 http_response_code(409);
                 echo json_encode(["error" => "No se puede eliminar el usuario porque tiene actividad registrada en el sistema."]);
             } else {
