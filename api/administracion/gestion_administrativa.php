@@ -186,11 +186,28 @@ switch ($method) {
         *realizamos captura de informacion, si cumple con los parametros hacemos la actualizacion de los datos 
         */
         try {
+            $sql = "UPDATE unexca_db.permisos SET 
+            nombre_permiso = :np,
+            descripcion = :d,
+            modulo = :id_m WHERE id_permiso = :id";
 
+            $parametros = [
+                'np' => trim($input['nombre_permiso']),
+                'd'  => trim($input['descripcion']),
+                'id_m' => $input['modulo'],
+                'id'   => $_GET['id_permiso']
+            ];
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($parametros);
+
+            echo json_encode([
+                "message" => "El permiso ha sido actualizado exitosamente!"
+            ]);
 
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(["error" => "Error en la base de datos", "detalle" => $e->getMessage()]);
+            echo json_encode(["error" => "Error en la base de datos"]);
         }
         break;
 
