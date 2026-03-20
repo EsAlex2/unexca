@@ -150,7 +150,7 @@ switch ($method) {
 
         if (!$id_usuario) {
             http_response_code(400);
-            echo json_encode(["error" => "ID de usuario válido requerido en la URL"]);
+            echo json_encode(["error" => "el id del usuario no es válido"]);
             break;
         }
 
@@ -162,9 +162,8 @@ switch ($method) {
             break;
         }
 
-
+        
         $camposRequeridos = ['id_tipo', 'cedula', 'nombres', 'apellidos', 'correo_institucional'];
-
         foreach ($camposRequeridos as $campo) {
             if (!isset($input[$campo]) || strlen(trim((string) $input[$campo])) === 0) {
                 http_response_code(400);

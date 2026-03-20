@@ -36,7 +36,7 @@ switch ($method) {
             }
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(["error" => "Error al consultar", "detalle" => $e->getMessage()]);
+            echo json_encode(["error" => "Error al consultar"]);
         }
         break;
 
@@ -128,12 +128,79 @@ switch ($method) {
         }
         break;
 
+    case 'PUT':
+            /*
+            *creamos validaciones para mantener la seguridad e integridad de los datos ingresados por los usuarios
+            */
+            $input = json_decode(file_get_contents('php://input'), true);
+            $id_permiso = filter_input(INPUT_GET, 'id_permiso', FILTER_VALIDATE_INT);
+            /*
+            verificamos que el permiso sea valido
+            */
+            if (!$id_permiso) {
+                http_response_code(400);
+                echo json_encode(["error" => "El id del permiso no es válido"]);
+                break;
+            }
+            /*
+            validamos que el permiso exista, prepraramos un query con pdo y arrojamos un mensaje de permiso no encontrado si no se encuantra el permiso
+            */
+            $permisoExistente = $pdo->prepare("SELECT id_permiso FROM unexca_db.permisos WHERE id_permiso = :id");
+            $permisoExistente->execute(['id' => $id_permiso]);
+            if (!$permisoExistente->fetch()) {
+                http_response_code(404);
+                echo json_encode(["error" => "Permiso no encontrado"]);
+                break;
+            }
+            /*
+            validamos que los campos no esten vacios y sean obligatorios para actualizar
+            */
+            $camposRequeridos = [
+                'nombre_permiso',
+                'descripcion',
+                'modulo'
+            ];
+            foreach ($camposRequeridos as $requerido) {
+                if (!isset($input[$requerido]) || strlen(trim((string) $input[$requerido])) === 0) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "El campo '$requerido' es obligatorio."]);
+                    exit;
+                }
+            }
+            /*
+            chequeamos que no existan valores duplicados en los permisos registrados previamente
+            */
+            $valoresDuplicados = $pdo->prepare("SELECT id_permiso FROM unexca_db.permisos WHERE (nombre_permiso = :np AND id_permiso != :id)");
+            $valoresDuplicados->execute([
+                'np' => $input['nombre_permiso'],
+                'id' => $id_permiso
+            ]);
+
+            if ($valoresDuplicados->fetch()) {
+                http_response_code(409);
+                echo json_encode([
+                    "error" => "Permiso registrado previamente"
+                ]);
+            }
+        /*
+        *realizamos captura de informacion, si cumple con los parametros hacemos la actualizacion de los datos 
+        */
+        try {
+
+
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(["error" => "Error en la base de datos", "detalle" => $e->getMessage()]);
+        }
+        break;
+
+
     case 'DELETE':
         try {
             // Revocar un permiso de un rol (quitar la relación)
             if (isset($_GET['revocar'], $_GET['id_tipo'], $_GET['id_permiso'])) {
                 $stmt = $pdo->prepare("DELETE FROM unexca_db.roles_permisos 
-                                       WHERE id_tipo_usuario = :r AND id_permiso = :p");
+                            WHERE id_tipo_usuario = :r AND id_permiso = :p");
                 $stmt->execute([
                     'r' => $_GET['id_tipo'],
                     'p' => $_GET['id_permiso']
