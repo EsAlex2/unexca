@@ -78,7 +78,7 @@ switch ($method) {
             posteriormente, iteramos en los campos atraves de un array para verificar cual es el campo que esta vacio
             y si no existe ese campo, enviamos un mensaje indicando que esta faltando ese campo especificamente.
             */
-            $campos_requeridos = ['cedula', 'nombres', 'apellidos', 'correo_institucional', 'password_hash'];
+            $campos_requeridos = ['cedula', 'nombres', 'apellidos', 'correo_institucional', 'password_hash', 'id_tipo'];
             foreach ($campos_requeridos as $campo) {
                 if (!isset($input[$campo]) || empty(trim((string) $input[$campo]))) {
                     http_response_code(400);
@@ -99,7 +99,7 @@ switch ($method) {
             }
 
             /*
-            añadimos un
+            añadimos una validacion para que el campo de contraseñas posea minimo 8 caracteres
             */
 
             if (strlen($input['password_hash']) < 8) {
@@ -118,8 +118,8 @@ switch ($method) {
 
             $password_hash = password_hash($input['password_hash'], PASSWORD_DEFAULT);
 
-            $sql = "INSERT INTO unexca_db.usuarios (cedula, nombres, apellidos, correo_institucional, password_hash) 
-                VALUES (:cedula, :nombres, :apellidos, :correo_institucional, :password_hash)";
+            $sql = "INSERT INTO unexca_db.usuarios (cedula, nombres, apellidos, correo_institucional, password_hash, id_tipo) 
+                VALUES (:cedula, :nombres, :apellidos, :correo_institucional, :password_hash, :id_tipo)";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
@@ -128,6 +128,7 @@ switch ($method) {
                 'apellidos' => trim($input['apellidos']),
                 'correo_institucional' => trim($input['correo_institucional']),
                 'password_hash' => $password_hash,
+                'id_tipo' => $input['id_tipo']
             ]);
 
             http_response_code(201);
@@ -171,8 +172,6 @@ switch ($method) {
                 exit;
             }
         }
-
-
 
         $checkDup = $pdo->prepare("SELECT id_usuario FROM unexca_db.usuarios 
                                    WHERE (cedula = :c OR correo_institucional = :e) 
