@@ -211,32 +211,6 @@ switch ($method) {
         }
         break;
 
-
-    case 'DELETE':
-        try {
-            // Revocar un permiso de un rol (quitar la relación)
-            if (isset($_GET['revocar'], $_GET['id_tipo'], $_GET['id_permiso'])) {
-                $stmt = $pdo->prepare("DELETE FROM unexca_db.roles_permisos 
-                            WHERE id_tipo_usuario = :r AND id_permiso = :p");
-                $stmt->execute([
-                    'r' => $_GET['id_tipo'],
-                    'p' => $_GET['id_permiso']
-                ]);
-                echo json_encode(["message" => "Permiso revocado del rol"]);
-            }
-            // Eliminar el permiso por completo de la base de datos
-            else if (isset($_GET['id_permiso'])) {
-                $id = filter_input(INPUT_GET, 'id_permiso', FILTER_VALIDATE_INT);
-                $stmt = $pdo->prepare("DELETE FROM unexca_db.permisos WHERE id_permiso = :id");
-                $stmt->execute(['id' => $id]);
-                echo json_encode(["message" => "Permiso eliminado del sistema"]);
-            }
-        } catch (PDOException $e) {
-            http_response_code(500);
-            echo json_encode(["error" => "No se pudo revocar el permiso. Verifique si el permiso está en uso."]);
-        }
-        break;
-
     default:
         http_response_code(405);
         echo json_encode(["error" => "Método no permitido"]);

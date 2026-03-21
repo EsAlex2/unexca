@@ -225,45 +225,6 @@ switch ($method) {
         }
         break;
 
-    case 'DELETE':
-        try {
-            $id = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
-
-            if (!$id) {
-                http_response_code(400);
-                echo json_encode(["error" => "ID de usuario no válido"]);
-                break;
-            }
-
-            $checkStmt = $pdo->prepare("SELECT id_usuario FROM unexca_db.usuarios WHERE id_usuario = :id");
-            $checkStmt->execute(['id' => $id]);
-            $usuario = $checkStmt->fetch();
-
-            if (!$usuario) {
-                http_response_code(404);
-                echo json_encode(["error" => "El usuario con ID $id no existe"]);
-                break;
-            }
-
-            $stmt = $pdo->prepare("DELETE FROM unexca_db.usuarios WHERE id_usuario = :id");
-            $stmt->execute(['id' => $id]);
-
-            echo json_encode([
-                "message" => "Usuario eliminado exitosamente",
-                "id_eliminado" => $id
-            ]);
-
-        } catch (PDOException $e) {
-            if ($e->getCode() == '23503') {
-                http_response_code(409);
-                echo json_encode(["error" => "No se puede eliminar el usuario porque tiene actividad registrada en el sistema."]);
-            } else {
-                http_response_code(500);
-                echo json_encode(["error" => "Error interno al eliminar", "detalle" => $e->getMessage()]);
-            }
-        }
-        break;
-
     default:
         http_response_code(405);
         echo json_encode(["error" => "Método no permitido"]);
