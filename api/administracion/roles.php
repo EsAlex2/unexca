@@ -47,7 +47,7 @@ switch ($method) {
             */
             if (!isset($input['nombre_tipo']) || empty(trim($input['nombre_tipo'])) || !isset($input['descripcion']) || empty(trim($input['descripcion']))) {
                 http_response_code(400);
-                echo json_encode(["error" => "El nombre y la descripcion del rol  es obligatorio"]);
+                echo json_encode(["error" => "El nombre y la descripcion del rol es obligatorio"]);
                 exit;
             }
             /*

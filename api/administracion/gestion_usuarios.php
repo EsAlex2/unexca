@@ -14,7 +14,6 @@ switch ($method) {
             */
             if (isset($_GET['id_usuario'])) {
                 $id = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
-
                 /*
                 si el get envia un id no valido, mostrara un error en pantalla.
                 */
@@ -23,7 +22,6 @@ switch ($method) {
                     echo json_encode(["error" => "ID no válido"]);
                     break;
                 }
-
                 /*
                 creamos un query para buscar y mostrar el usuario almacenado en base de datos mientras exista el id del usuario y mostrar el usuario seleccionado.
                 */

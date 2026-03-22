@@ -31,7 +31,7 @@ switch ($method) {
             }
             // Listado general
             else {
-                $stmt = $pdo->query("SELECT * FROM unexca_db.permisos ORDER BY id_modulos ASC");
+                $stmt = $pdo->query("SELECT * FROM unexca_db.permisos ORDER BY id_permiso ASC");
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             }
         } catch (PDOException $e) {
