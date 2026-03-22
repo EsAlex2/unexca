@@ -42,14 +42,17 @@ switch ($method) {
     case 'POST':
         try {
             $input = json_decode(file_get_contents('php://input'), true);
-
-            if (!isset($input['nombre_tipo']) || empty(trim($input['nombre_tipo']))) {
+            /*
+            *Validacion para saber si existe o si esta vacio los campos de nombre y descripcion del rol
+            */
+            if (!isset($input['nombre_tipo']) || empty(trim($input['nombre_tipo'])) || !isset($input['descripcion']) || empty(trim($input['descripcion']))) {
                 http_response_code(400);
-                echo json_encode(["error" => "El nombre del rol es obligatorio"]);
+                echo json_encode(["error" => "El nombre y la descripcion del rol  es obligatorio"]);
                 exit;
             }
-
-            // Validar duplicados
+            /*
+            *validacion para saber si el rol existe previamente
+            */
             $check = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.tipos_usuario WHERE nombre_tipo = :nom");
             $check->execute(['nom' => trim($input['nombre_tipo'])]);
             if ($check->fetchColumn() > 0) {
@@ -57,10 +60,14 @@ switch ($method) {
                 echo json_encode(["error" => "El rol ya existe"]);
                 exit;
             }
-
-            $stmt = $pdo->prepare("INSERT INTO unexca_db.tipos_usuario (nombre_tipo) VALUES (:nom)");
-            $stmt->execute(['nom' => trim($input['nombre_tipo'])]);
-
+            /*
+            *insertamos los datos que recibiremos por el usuario en este query
+            */
+            $stmt = $pdo->prepare("INSERT INTO unexca_db.tipos_usuario (nombre_tipo, descripcion) VALUES (:nom, :d)");
+            $stmt->execute(['nom' => trim($input['nombre_tipo']),  'd' => trim($input['descripcion'])]);
+            /*
+            *
+            */
             http_response_code(201);
             echo json_encode(["message" => "Rol creado exitosamente"]);
         } catch (PDOException $e) {
@@ -70,19 +77,20 @@ switch ($method) {
         break;
 
     case 'PUT':
-        try {
+        try {   
             $id = filter_input(INPUT_GET, 'id_tipo', FILTER_VALIDATE_INT);
             $input = json_decode(file_get_contents('php://input'), true);
 
-            if (!$id || !isset($input['nombre_tipo']) || empty(trim($input['nombre_tipo']))) {
+            if (!$id || !isset($input['nombre_tipo']) || empty(trim($input['nombre_tipo'])) || !isset($input['descripcion']) || empty(trim($input['descripcion']))) {
                 http_response_code(400);
-                echo json_encode(["error" => "Datos incompletos o ID no válido"]);
+                echo json_encode(["error" => "Datos incompletos o id invalido"]);
                 exit;
             }
 
-            $stmt = $pdo->prepare("UPDATE unexca_db.tipos_usuario SET nombre_tipo = :nom WHERE id_tipo = :id");
+            $stmt = $pdo->prepare("UPDATE unexca_db.tipos_usuario SET nombre_tipo = :nom, descripcion = :d WHERE id_tipo = :id");
             $stmt->execute([
                 'nom' => trim($input['nombre_tipo']),
+                'd' => trim($input['descripcion']),
                 'id' => $id
             ]);
 
