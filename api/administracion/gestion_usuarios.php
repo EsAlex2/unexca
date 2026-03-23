@@ -7,7 +7,6 @@ header("Content-Type: application/json");
 $method = $_SERVER['REQUEST_METHOD'];
 $auth = new AuthMiddleware($pdo);
 
-
 switch ($method) {
     case 'GET':
         try {
@@ -74,6 +73,7 @@ switch ($method) {
             los datos enviados en un formato JSON desde nuestra aplicacion(cliente API) a traves de una 
             peticion.
             */
+
             $auth->protegerRuta('crear_usuario');
             
             $json = file_get_contents('php://input');
@@ -106,13 +106,17 @@ switch ($method) {
             /*
             añadimos una validacion para que el campo de contraseñas posea minimo 8 caracteres
             */
-
             if (strlen($input['password_hash']) < 8) {
                 http_response_code(400);
                 echo json_encode(["error" => "La contraseña debe tener al menos 8 caracteres."]);
                 exit;
             }
-
+            
+            /*
+            * --validacion de cedula y correo que no esten registrados en la base de datos--
+            * prepraramos una consulta a la base de datos, seleccionamos y contamos los usuarios mientras la cedula o correo ingresada por el usuario
+            * no esten registradas en la base de datos
+            */
             $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.usuarios WHERE cedula = :c OR correo_institucional = :e");
             $checkStmt->execute(['c' => $input['cedula'], 'e' => $input['correo_institucional']]);
             if ($checkStmt->fetchColumn() > 0) {
@@ -121,8 +125,14 @@ switch ($method) {
                 exit;
             }
 
+            /*
+            * validacion de la contraseña hasheada 
+            */
             $password_hash = password_hash($input['password_hash'], PASSWORD_DEFAULT);
 
+            /*
+            * insertamos lo datos enviados del usuario a la base de datos y enviamos un mensaje de exito si fue un 201.
+            */
             $sql = "INSERT INTO unexca_db.usuarios (cedula, nombres, apellidos, correo_institucional, password_hash, id_tipo) 
                 VALUES (:cedula, :nombres, :apellidos, :correo_institucional, :password_hash, :id_tipo)";
 

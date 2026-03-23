@@ -3,10 +3,12 @@
 /**
  * Verificacion para saber si un tipo de usuario, tiene un permiso específico asignado.
  */
-class AuthMiddleware {
+class AuthMiddleware
+{
     private $pdo;
 
-    public function __construct($pdo) {
+    public function __construct($pdo)
+    {
         $this->pdo = $pdo;
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -16,11 +18,12 @@ class AuthMiddleware {
     /**
      * Valida sesión, estado de la cuenta (activo) y permisos.
      */
-    public function protegerRuta($nombre_permiso) {
+    public function protegerRuta($nombre_permiso)
+    {
         $id_usuario = $_SESSION['id_usuario'] ?? null;
         $id_tipo_usuario = $_SESSION['id_tipo'] ?? null;
 
-        // 1. Verificación básica de sesión
+        //Verificación de sesión
         if (!$id_usuario || !$id_tipo_usuario) {
             http_response_code(401);
             echo json_encode(["error" => "Sesión no iniciada."]);
@@ -28,7 +31,7 @@ class AuthMiddleware {
         }
 
         try {
-            // 2. Verificación combinada: ¿El usuario está activo? ¿El rol tiene el permiso?
+            //Verificación combinada: ¿El usuario está activo? ¿El rol tiene el permiso?
             $sql = "SELECT u.activo, 
                     (SELECT COUNT(*) 
                      FROM unexca_db.roles_permisos rp
@@ -41,19 +44,19 @@ class AuthMiddleware {
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([
                 'id_user' => $id_usuario,
-                'nombre'  => $nombre_permiso
+                'nombre' => $nombre_permiso
             ]);
 
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // 3. Validar si el usuario existe
+            //Validar si el usuario existe
             if (!$resultado) {
                 http_response_code(404);
                 echo json_encode(["error" => "Usuario no encontrado."]);
                 exit;
             }
 
-            // 4. Validar si el usuario está activo
+            // Validar si el usuario está activo
             if ($resultado['activo'] == false) {
                 session_destroy();
                 http_response_code(403);
