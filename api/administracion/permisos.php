@@ -19,7 +19,7 @@ switch ($method) {
                 $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
                 echo json_encode($resultado ?: ["error" => "Permiso no encontrado"]);
             }
-            // Si se piden los permisos de un ROL específico (útil para el frontend)
+            // Si se piden los permisos de un ROL específico
             else if (isset($_GET['id_tipo'])) {
                 $id_tipo = filter_input(INPUT_GET, 'id_tipo', FILTER_VALIDATE_INT);
                 $sql = "SELECT p.* FROM unexca_db.permisos p
@@ -45,22 +45,26 @@ switch ($method) {
             $json = file_get_contents('php://input');
             $input = json_decode($json, true);
 
-            $nombrePermiso = trim($input['nombre_permiso']);
+            // Variables para la creación de un nuevo permiso
+            $nombrePermiso = isset($input['nombre_permiso']) ? trim($input['nombre_permiso']) : null;
             $descripcion = trim($input['descripcion'] ?? '');
+            $idModulo = $input['id_modulos'] ?? null;
 
-            //Crear nuevo permiso
-            if (isset($nombrePermiso, $input['id_modulos'])) {
+            // ACCIÓN 1: Crear nuevo permiso individual
+            if ($nombrePermiso && $idModulo) {
+                // 1. Verificar si el permiso ya existe (ignorando mayúsculas/minúsculas)
                 $checkP = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.permisos WHERE LOWER(nombre_permiso) = LOWER(:nom)");
                 $checkP->execute(['nom' => $nombrePermiso]);
 
                 if ($checkP->fetchColumn() > 0) {
                     http_response_code(409);
-                    echo json_encode(["error" => "El permiso '$nombrePermiso' ya existe en el sistema"]);
+                    echo json_encode(["error" => "El permiso '$nombrePermiso' ya existe"]);
                     exit;
                 }
-                
+
+                // 2. Verificar si el módulo existe en unexca_db.modulos
                 $checkM = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.modulos WHERE id_modulo = :mod");
-                $checkM->execute(['mod' => $input['id_modulo']]);
+                $checkM->execute(['mod' => $idModulo]);
 
                 if ($checkM->fetchColumn() == 0) {
                     http_response_code(404);
@@ -68,13 +72,14 @@ switch ($method) {
                     exit;
                 }
 
+                // 3. Insertar el nuevo permiso 
                 $sql = "INSERT INTO unexca_db.permisos (nombre_permiso, descripcion, id_modulos) 
-                VALUES (:nom, :des, :mod)";
+                        VALUES (:nom, :des, :mod)";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
                     'nom' => $nombrePermiso,
                     'des' => $descripcion,
-                    'mod' => $input['id_modulos']
+                    'mod' => $idModulo
                 ]);
 
                 http_response_code(201);
@@ -84,13 +89,16 @@ switch ($method) {
                 ]);
             }
 
-            // ACCIÓN 2: Asignar permiso a un Rol (Con validación previa)
-            else if (isset($input['id_tipo_usuario'], $input['id_permiso'])) {
+            // ACCIÓN 2: Asignar múltiples permisos a un Rol (Procesamiento por lote)
+            else if (isset($input['id_tipo_usuario'], $input['id_permiso'], $input['id_usuario']) && is_array($input['id_permiso'])) {
 
-                // 1. Verificar si el TIPO DE USUARIO (Rol) existe 
+                $id_rol = $input['id_tipo_usuario'];
+                $permisosArray = $input['id_permiso'];
+                $id_usuario = $input['id_usuario'];
+
+                // 1. Verificar si el TIPO DE USUARIO (Rol) existe [cite: 11]
                 $checkRol = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.tipos_usuario WHERE id_tipo = :r");
-                $checkRol->execute(['r' => $input['id_tipo_usuario']]);
-
+                $checkRol->execute(['r' => $id_rol]);
 
                 if ($checkRol->fetchColumn() == 0) {
                     http_response_code(404);
@@ -98,48 +106,49 @@ switch ($method) {
                     exit;
                 }
 
-                // 2. Verificar si el PERMISO existe 
-                $checkPerm = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.permisos WHERE id_permiso = :p");
-                $checkPerm->execute(['p' => $input['id_permiso']]);
+                $checkUser = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.usuarios WHERE id_usuario = :u");
+                $checkUser->execute(['u' => $id_usuario]);
 
-                if ($checkPerm->fetchColumn() == 0) {
+                if ($checkUser->fetchColumn() == 0) {
                     http_response_code(404);
-                    echo json_encode(["error" => "El permiso especificado no existe"]);
+                    echo json_encode(["error" => "El usuario especificado no existe"]);
                     exit;
                 }
 
-                $checkAsig = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.roles_permisos 
-                               WHERE id_tipo_usuario = :rol AND id_permiso = :perm");
-                $checkAsig->execute([
-                    'rol' => $input['id_tipo_usuario'],
-                    'perm' => $input['id_permiso']
-                ]);
+                // Iniciamos una transacción para asegurar que todos los permisos se asignen correctamente
+                $pdo->beginTransaction();
 
-                if ($checkAsig->fetchColumn() > 0) {
-                    // Si el conteo es mayor a 0, significa que ya está asignado
-                    http_response_code(409);
-                    echo json_encode(["error" => "Este rol ya tiene asignado ese permiso actualmente."]);
-                    exit;
+                try {
+                    // Preparamos la sentencia de inserción con ON CONFLICT para evitar errores si ya existe la relación 
+                    $sqlAsignar = "INSERT INTO unexca_db.roles_permisos (id_tipo_usuario, id_permiso, id_usuario) 
+                                   VALUES (:rol, :perm, :usuario) 
+                                   ON CONFLICT (id_tipo_usuario, id_permiso, id_usuario) DO NOTHING";
+                    $stmtAsignar = $pdo->prepare($sqlAsignar);
+
+                    foreach ($permisosArray as $id_permiso) {
+                        // Opcional: Podrías verificar aquí si cada $id_permiso existe en la tabla permisos
+                        $stmtAsignar->execute([
+                            'rol' => $id_rol,
+                            'perm' => $id_permiso,
+                            'usuario' => $id_usuario
+                        ]);
+                    }
+
+                    $pdo->commit();
+                    echo json_encode(["message" => "Asignación de permisos procesada exitosamente"]);
+
+                } catch (Exception $e) {
+                    $pdo->rollBack();
+                    throw $e; // Re-lanzar para que lo capture el catch principal
                 }
-
-                // 3. Proceder con la asignación si ambos existen
-                $sql = "INSERT INTO unexca_db.roles_permisos (id_tipo_usuario, id_permiso) 
-                        VALUES (:rol, :perm) ON CONFLICT DO NOTHING";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([
-                    'rol' => $input['id_tipo_usuario'],
-                    'perm' => $input['id_permiso']
-                ]);
-
-                echo json_encode(["message" => "Permiso asignado al rol exitosamente"]);
             } else {
                 http_response_code(400);
-                echo json_encode(["error" => "Datos incompletos para procesar la solicitud"]);
+                echo json_encode(["error" => "Datos incompletos o formato de permisos no válido (debe ser un arreglo)"]);
             }
         } catch (PDOException $e) {
-            error_log($e->getMessage());
+            error_log("Error en POST permisos.php: " . $e->getMessage());
             http_response_code(500);
-            echo json_encode(["error" => "Error interno del servidor"]);
+            echo json_encode(["error" => "Error interno del servidor al procesar la solicitud"]);
         }
         break;
 
@@ -196,6 +205,7 @@ switch ($method) {
             echo json_encode([
                 "error" => "Permiso registrado previamente"
             ]);
+            exit;
         }
         /*
          *realizamos captura de informacion, si cumple con los parametros hacemos la actualizacion de los datos 

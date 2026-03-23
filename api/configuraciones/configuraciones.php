@@ -26,7 +26,7 @@ switch ($method) {
                     echo json_encode($config);
                 } else {
                     http_response_code(404);
-                    echo json_encode(["error" => "configuracion no encontrado"]);
+                    echo json_encode(["error" => "Configuracion no encontrada"]);
                 }
 
             } else {
@@ -50,7 +50,7 @@ switch ($method) {
 
             // 1. Validar si la CLAVE ya existe (usamos AND en el WHERE)
             $checkConfig = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.configuraciones WHERE clave = :c OR valor = :v");
-            $checkConfig->execute(['c' => $input['clave'], 'v' => $input['valor']]);
+            $checkConfig->execute(['c' => $input['clave']]);
 
             if ($checkConfig->fetchColumn() > 0) {
                 http_response_code(409); // 409 Conflict es mejor para duplicados

@@ -1,5 +1,8 @@
 <?php 
 //config/config.php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $db_server = "127.0.0.1";
 $db_name = "admin_sql";
 $db_user = "postgres";
