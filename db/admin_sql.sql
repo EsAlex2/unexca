@@ -4,6 +4,19 @@ CREATE TABLE unexca_db.tipos_usuario (
 	descripcion TEXT
 );
 
+CREATE TABLE unexca_db.estatus (
+	id_estatus SERIAL PRIMARY KEY,
+	nombre_estatus VARCHAR (100) NOT NULL,
+	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE unexca_db.sedes_unexca (
+    id_sede SERIAL PRIMARY KEY,
+    nombre_sede VARCHAR(100) NOT NULL,
+    correo_institucional VARCHAR(100) UNIQUE NOT NULL,
+    direccion TEXT
+);
+
 CREATE TABLE unexca_db.usuarios (
     id_usuario SERIAL PRIMARY KEY,
     cedula VARCHAR(15) UNIQUE NOT NULL,
@@ -17,72 +30,106 @@ CREATE TABLE unexca_db.usuarios (
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE unexca_db.pnf (
+	id_pnf SERIAL PRIMARY KEY,
+	id_sede INTEGER REFERENCES unexca_db.sedes_unexca(id_sede) ON DELETE CASCADE,
+	cod_pnf VARCHAR(20) NOT NULL,
+	nombre_pnf VARCHAR(100) NOT NULL,
+	descripcion TEXT,
+	duracion_pnf INTEGER NOT NULL,
+	unidad_total_creditos INTEGER NOT NULL,
+	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE unexca_db.trayectos (
+	id_trayecto SERIAL PRIMARY KEY,
+	id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
+	id_periodo INTEGER REFERENCES unexca_db.periodo_academico(id_periodo) ON DELETE CASCADE,
+	cod_trayecto VARCHAR(10) NOT NULL,
+	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE unexca_db.unidades_curriculares (
+    id_unidad_curricular SERIAL PRIMARY KEY,
+    id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
+	id_trayecto INTEGER REFERENCES unexca_db.trayectos(id_trayecto) ON DELETE CASCADE,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    unidades_credito INTEGER NOT NULL
+);
+
+CREATE TABLE unexca_db.datos_docentes (
+    id_docente SERIAL PRIMARY KEY,
+    id_usuario INTEGER REFERENCES unexca_db.usuarios(id_usuario) ON DELETE CASCADE,
+	id_tipo INTEGER REFERENCES unexca_db.tipos_usuario(id_tipo) ON DELETE CASCADE,
+    id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
+    nombres VARCHAR(100) NOT NULL,
+	apellidos VARCHAR(100) NOT NULL,
+	genero VARCHAR(30) NOT NULL,
+	fecha_nacimiento DATE NOT NULL,
+	correo_personal VARCHAR(150) UNIQUE NOT NULL,
+	telefono_personal VARCHAR(20),
+	direccion_habitacion TEXT,
+	fecha_ingreso DATE NOT NULL,
+	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	ultimo_login TIMESTAMP
+);
+
+CREATE TABLE unexca_db.periodo_academico (
+    id_periodo SERIAL PRIMARY KEY,
+    periodo VARCHAR(10) NOT NULL UNIQUE,
+    fecha_inicio DATE NOT NULL,
+    fecha_final DATE NOT NULL,
+    estado BOOLEAN DEFAULT TRUE,
+    CONSTRAINT check_fechas CHECK (fecha_final > fecha_inicio)
+);
+
+CREATE TABLE unexca_db.secciones (
+    id_seccion SERIAL PRIMARY KEY,
+    id_unidad_curricular INTEGER REFERENCES unexca_db.unidades_curriculares(id_unidad_curricular) ON DELETE CASCADE,
+    id_docente INTEGER REFERENCES unexca_db.datos_docentes(id_docente) ON DELETE SET NULL,
+	id_periodo INTEGER REFERENCES unexca_db.periodo_academico(id_periodo) ON DELETE SET NULL,
+    cod_seccion VARCHAR(15) NOT NULL,
+    capacidad_max INTEGER DEFAULT 40,
+    UNIQUE(id_unidad_curricular, id_periodo, cod_seccion)
+);
+
 CREATE TABLE unexca_db.datos_estudiantes (
     id_estudiante SERIAL PRIMARY KEY,
     id_usuario INTEGER REFERENCES unexca_db.usuarios(id_usuario) ON DELETE CASCADE,
-	id_semestre_actual INTEGER REFERENCES unexca_db.semestre_actual(id_semestre_actual) ON DELETE CASCADE,
-	id_expediente INTEGER REFERENCES unexca_db.expediente_estudiante(id_expediente) ON DELETE CASCADE,
 	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
+	id_seccion INTEGER REFERENCES unexca_db.secciones(id_seccion) ON DELETE CASCADE,
+	id_trayecto INTEGER REFERENCES unexca_db.trayectos(id_trayecto) ON DELETE CASCADE,
 	cedula_identidad VARCHAR(15) UNIQUE NOT NULL,
 	nombres_estudiante VARCHAR(100) NOT NULL,
 	apellidos_estudiante VARCHAR(100) NOT NULL,
-	genero ENUM('M', 'F', 'O') NOT NULL,
+	genero VARCHAR(30) NOT NULL,
 	fecha_nacimiento DATE NOT NULL,
 	correo_personal VARCHAR(150) UNIQUE NOT NULL,
 	telefono_personal VARCHAR (20),
 	direccion_habitacion TEXT,
     indice_academico DECIMAL(4,2) DEFAULT 0.00,
-    solvente BOOLEAN DEFAULT FALSE, --si el estudiante pago los aranceles de inscripcion, el estatus sera TRUE, sino FALSE
-    anio_ingreso VARCHAR(10)
+    fecha_ingreso DATE NOT NULL,
+	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	actualizado_en TIMESTAMP
 );
-
-SELECT * FROM unexca_db.estatus;
 
 CREATE TABLE unexca_db.expediente_estudiante (
 	id_expediente SERIAL PRIMARY KEY,
+	id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
 	cod_expediente VARCHAR(50) UNIQUE NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actulizado_en TIMESTAMP
-);
-
-CREATE TABLE unexca_db.semestre_actual (
-	id_semestre_actual SERIAL PRIMARY KEY,
-	periodo_academico VARCHAR(15) NOT NULL,
-	anio_en_curso VARCHAR(15) NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actulizado_en TIMESTAMP
+	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
-CREATE TABLE unexca_db.datos_docentes (
-    id_docente SERIAL PRIMARY KEY,
-    id_usuario INTEGER REFERENCES unexca_db.usuarios(id_usuario) ON DELETE CASCADE,
-    especialidad VARCHAR(100),
-    condicion VARCHAR(20) -- Fijo, Contratado
-);
-
-
-CREATE TABLE unexca_db.asignaturas (
-    id_asignatura SERIAL PRIMARY KEY,
-    codigo_materia VARCHAR(20) UNIQUE NOT NULL,
-    nombre_materia VARCHAR(100) NOT NULL,
-    unidades_credito INTEGER NOT NULL
-);
-
-CREATE TABLE unexca_db.secciones (
-    id_seccion SERIAL PRIMARY KEY,
-    id_asignatura INTEGER REFERENCES unexca_db.asignaturas(id_asignatura),
-    id_docente INTEGER REFERENCES unexca_db.datos_docentes(id_docente),
-    periodo_academico VARCHAR(10) NOT NULL, -- Ej: 2026-1
-    capacidad_max INTEGER DEFAULT 40
-);
-
-CREATE TABLE inscripciones_notas (
+CREATE TABLE unexca_db.inscripciones (
     id_inscripcion SERIAL PRIMARY KEY,
-    id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante),
-    id_seccion INTEGER REFERENCES unexca_db.secciones(id_seccion),
+    id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
+    id_seccion INTEGER REFERENCES unexca_db.secciones(id_seccion) ON DELETE CASCADE,
     nota_parcial DECIMAL(4,2) DEFAULT 0.00,
     nota_final DECIMAL(4,2) DEFAULT 0.00,
+    fecha_inscripcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(id_estudiante, id_seccion),
     CONSTRAINT check_rango_notas CHECK (nota_final >= 0 AND nota_final <= 20)
 );
 
@@ -93,22 +140,29 @@ CREATE TABLE unexca_db.aranceles (
     activo BOOLEAN DEFAULT TRUE
 );
 
+CREATE TABLE unexca_db.estatus_pago (
+	id_estatus_pago SERIAL PRIMARY KEY,
+	descripcion TEXT,
+	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE unexca_db.pagos (
     id_pago SERIAL PRIMARY KEY,
-    id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante),
-    id_arancel INTEGER REFERENCES unexca_db.aranceles(id_arancel),
+    id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
+    id_arancel INTEGER REFERENCES unexca_db.aranceles(id_arancel) ON DELETE CASCADE,
+	id_estatus INTEGER REFERENCES unexca_db.estatus_pago(id_estatus_pago) ON DELETE CASCADE,
+	nombre_banco VARCHAR(50) NOT NULL,
     referencia_bancaria VARCHAR(50) UNIQUE NOT NULL,
     fecha_pago DATE NOT NULL,
-    estatus_pago VARCHAR(20) DEFAULT 'pendiente'
+);
 
 CREATE VIEW reporte_aprobados AS
 SELECT *, CASE WHEN nota_final >= 13 THEN 'Aprobado' ELSE 'Reprobado' END AS estatus
 FROM inscripciones_notas;
 
-
 CREATE TABLE unexca_db.permisos (
     id_permiso SERIAL PRIMARY KEY,
-    nombre_permiso VARCHAR(100) UNIQUE NOT NULL, -- Ej: 'crear_usuario', 'editar_notas'
+    nombre_permiso VARCHAR(100) UNIQUE NOT NULL,
     descripcion TEXT,
     id_modulos INTEGER REFERENCES unexca_db.modulos(id_modulo) ON DELETE CASCADE
 );
@@ -147,13 +201,18 @@ CREATE TABLE unexca_db.categorias_conf (
 	actualizado_en TIMESTAMP
 );
 
-CREATE TABLE unexca_db.estatus (
-	id_estatus SERIAL PRIMARY KEY,
-	nombre_estatus VARCHAR (100) NOT NULL,
-	descripcion TEXT,
+
+CREATE TABLE unexca_db.semestre_actual (
+	id_semestre_actual SERIAL PRIMARY KEY,
+	periodo_academico VARCHAR(15) NOT NULL,
+	anio_en_curso VARCHAR(15) NOT NULL,
 	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actualizado_en TIMESTAMP
+	actulizado_en TIMESTAMP
 );
+
+
+INSERT INTO unexca_db.usuarios (cedula, nombres, apellidos, correo_institucional, password_hash, id_tipo) VALUES
+('27391753', 'Alex Jonfranc', 'Madrid Marin', 'alexmadrid326@gmail.com', 'qwerty2801**', 1)
 
 INSERT INTO unexca_db.estatus (nombre_estatus, descripcion) VALUES
 ('ACTIVO', 'Estudiante regular del semestre actual'),
@@ -225,3 +284,21 @@ INSERT INTO unexca_db.tipos_usuario (nombre_tipo, descripcion) VALUES
 ('Docente', 'Carga de calificaciones y gestión de actividades académicas.'),
 ('Estudiante', 'Consulta de historial académico e inscripción de unidades curriculares.'),
 ('Invitado', 'Acceso restringido para procesos de auditoría o preinscripción.');
+
+INSERT INTO unexca_db.sedes_unexca (nombre_sede, correo_institucional, direccion) VALUES 
+('La floresta', 'unexca_floresta2026@gmail.com', 'Av. Principal de la Floresta cruce con Av. Francisco de Miranda, Edificio, Caracas 1060, Miranda'),
+('Altagracia', 'unexca_altagracia2026@gmail.com', 'Esquina Mijares, Avenida Oeste 3, Altagracia, Caracas 1010, 1010, Distrito Capital'),
+('La Urbina', 'unexca_urbina2026@gmail.com', 'Calle 8, Zona Industrial, Edificio Mercurio, Caracas 1073, Distrito Capital'),
+('Carayaca, la Guaira', 'unexca_laguaira2026@gmail.com', 'complejo educativo Hueikaipuro, parroquia Carayaca, Municipio Vargas, Estado La Guaira');
+
+INSERT INTO unexca_db.pnf (id_sede, cod_pnf, nombre_pnf, descripcion, duracion_pnf, unidad_total_creditos) 
+VALUES 
+(1, 'ADM', 'PNF en Administración', 'Programa nacional de formación en el área administrativa.', 4, 180),
+(1, 'COP', 'PNF en Contaduría Pública', 'Programa enfocado en la gestión contable y financiera.', 4, 180),
+(1, 'DIL', 'PNF en Distribución y Logística', 'Gestión de cadenas de suministro y procesos logísticos.', 4, 180),
+(1, 'EDE', 'PNF en Educación Especial', 'Formación para la atención educativa integral.', 4, 180),
+(1, 'INF', 'PNF en Ingeniería Informática', 'Desarrollo de software y sistemas de información.', 4, 190),
+(1, 'TUR', 'PNF en Turismo', 'Gestión y desarrollo de servicios turísticos sostenibles.', 4, 170);
+
+INSERT INTO unexca_db.usuarios (cedula, nombres, apellidos, correo_institucional, password_hash, id_tipo) VALUES
+('27391753', 'Alex Jonfranc', 'Madrid Marin', 'alexmadrid326@gmail.com', 'qwerty2801**', 1)

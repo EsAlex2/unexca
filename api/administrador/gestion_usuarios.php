@@ -5,7 +5,7 @@ include_once '../../auth/auth_helper.php';
 header("Content-Type: application/json");
 
 $method = $_SERVER['REQUEST_METHOD'];
-$auth = new AuthMiddleware($pdo);
+//$auth = new AuthMiddleware($pdo);
 
 switch ($method) {
     case 'GET':
@@ -14,7 +14,7 @@ switch ($method) {
             si existe un id_usuario, almacena esa informacion en una variable
             donde se va a filtrar pata validar que solo sea un entero.
             */
-            $auth->protegerRuta('mostrar_usuarios');
+            //$auth->protegerRuta('mostrar_usuarios');
 
             if (isset($_GET['id_usuario'])) {
                 $id = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
@@ -29,8 +29,8 @@ switch ($method) {
                 /*
                 creamos un query para buscar y mostrar el usuario almacenado en base de datos mientras exista el id del usuario y mostrar el usuario seleccionado.
                 */
-                $stmt = $pdo->prepare("SELECT id_usuario, cedula, nombres, apellidos, correo_institucional, id_tipo,activo,ultimo_login, creado_en 
-                                       FROM unexca_db.usuarios 
+                $stmt = $pdo->prepare("SELECT id_usuario, cedula, nombres, apellidos, correo_institucional, id_tipo,activo,ultimo_login, creado_en
+                                       FROM unexca_db.usuarios
                                        WHERE id_usuario = :id");
 
                 $stmt->execute(['id' => $id]);
@@ -70,12 +70,12 @@ switch ($method) {
         try {
             /*
             convierte la informacion ingrasada por el usuario en input, nos servira para recibir y procesar
-            los datos enviados en un formato JSON desde nuestra aplicacion(cliente API) a traves de una 
+            los datos enviados en un formato JSON desde nuestra aplicacion(cliente API) a traves de una
             peticion.
             */
 
-            $auth->protegerRuta('crear_usuario');
-            
+            //$auth->protegerRuta('crear_usuario');
+
             $json = file_get_contents('php://input');
             $input = json_decode($json, true);
 
@@ -111,7 +111,7 @@ switch ($method) {
                 echo json_encode(["error" => "La contraseña debe tener al menos 8 caracteres."]);
                 exit;
             }
-            
+
             /*
             * --validacion de cedula y correo que no esten registrados en la base de datos--
             * prepraramos una consulta a la base de datos, seleccionamos y contamos los usuarios mientras la cedula o correo ingresada por el usuario
@@ -126,14 +126,14 @@ switch ($method) {
             }
 
             /*
-            * validacion de la contraseña hasheada 
+            * validacion de la contraseña hasheada
             */
             $password_hash = password_hash($input['password_hash'], PASSWORD_DEFAULT);
 
             /*
             * insertamos lo datos enviados del usuario a la base de datos y enviamos un mensaje de exito si fue un 201.
             */
-            $sql = "INSERT INTO unexca_db.usuarios (cedula, nombres, apellidos, correo_institucional, password_hash, id_tipo) 
+            $sql = "INSERT INTO unexca_db.usuarios (cedula, nombres, apellidos, correo_institucional, password_hash, id_tipo)
                 VALUES (:cedula, :nombres, :apellidos, :correo_institucional, :password_hash, :id_tipo)";
 
             $stmt = $pdo->prepare($sql);
@@ -163,7 +163,7 @@ switch ($method) {
 
         $id_usuario = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
 
-        $auth->protegerRuta('editar_usuario');
+        //$auth->protegerRuta('editar_usuario');
 
         if (!$id_usuario) {
             http_response_code(400);
@@ -189,8 +189,8 @@ switch ($method) {
             }
         }
 
-        $checkDup = $pdo->prepare("SELECT id_usuario FROM unexca_db.usuarios 
-                                   WHERE (cedula = :c OR correo_institucional = :e) 
+        $checkDup = $pdo->prepare("SELECT id_usuario FROM unexca_db.usuarios
+                                   WHERE (cedula = :c OR correo_institucional = :e)
                                    AND id_usuario != :id");
         $checkDup->execute([
             'c' => $input['cedula'],
@@ -209,13 +209,13 @@ switch ($method) {
                 ? password_hash($input['password_hash'], PASSWORD_DEFAULT)
                 : null;
 
-            $sql = "UPDATE unexca_db.usuarios 
-                    SET cedula = :cedula, 
-                        nombres = :nombres, 
-                        apellidos = :apellidos, 
-                        correo_institucional = :correo, 
+            $sql = "UPDATE unexca_db.usuarios
+                    SET cedula = :cedula,
+                        nombres = :nombres,
+                        apellidos = :apellidos,
+                        correo_institucional = :correo,
                         id_tipo = :tipo" .
-                ($pass_to_update ? ", password_hash = :pass" : "") . " 
+                ($pass_to_update ? ", password_hash = :pass" : "") . "
                     WHERE id_usuario = :id";
 
             $params = [

@@ -4,6 +4,7 @@ include_once '../../config/db.php';
 
 header("Content-Type: application/json");
 
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(["error" => "Método no permitido"]);
@@ -27,10 +28,10 @@ if (!$correo || !$password) {
 try {
     // 3. Buscar al usuario por correo
     // Nota: Seleccionamos password_hash para verificarlo y el id_tipo para la sesión
-    $sql = "SELECT id_usuario, correo_institucional, password_hash, id_tipo, nombres, apellidos, activo 
-            FROM unexca_db.usuarios 
+    $sql = "SELECT id_usuario, correo_institucional, password_hash, id_tipo, nombres, apellidos, activo
+            FROM unexca_db.usuarios
             WHERE correo_institucional = :correo";
-    
+
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['correo' => $correo]);
     $usuario = $stmt->fetch();
