@@ -9,8 +9,8 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         try {
-            if (isset($_GET['cedula_identidad'])) {
-                $cedula = filter_input(INPUT_GET, 'cedula_identidad', FILTER_SANITIZE_STRING);
+            if (isset($_GET['cedula_docente'])) {
+                $cedula = filter_input(INPUT_GET, 'cedula_docente', FILTER_SANITIZE_STRING);
                 /*
                 si el get envia una cedula no valida, mostrara un error en pantalla.
                 */
@@ -20,11 +20,11 @@ switch ($method) {
                     break;
                 }
                 /*
-                creamos un query para buscar y mostrar el usuario almacenado en base de datos mientras exista la cedula del estudiante y mostrar el estudiante seleccionado.
+                creamos un query para buscar y mostrar el docente almacenado en base de datos mientras exista la cedula del docente y mostrar el docente seleccionado.
                 */
-                $stmt = $pdo->prepare("SELECT id_estudiante, id_tipo, cedula_identidad, nombres_estudiante, apellidos_estudiante, fecha_nacimiento, correo_personal, direccion_habitacion, telefono_personal, fecha_ingreso, id_estatus
-                                       FROM unexca_db.datos_estudiantes
-                                       WHERE cedula_identidad = :cedula");
+                $stmt = $pdo->prepare("SELECT id_docente, id_tipo, id_estatus, cedula_docente, nombres, apellidos, genero, correo_personal, fecha_nacimiento, correo_personal, telefono_personal, direccion_habitacion, fecha_ingreso
+                                       FROM unexca_db.datos_docentes
+                                       WHERE cedula_docente = :cedula");
 
                 $stmt->execute(['cedula' => $cedula]);
                 $checkExist = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -32,21 +32,21 @@ switch ($method) {
                     echo json_encode($checkExist);
                 } else {
                     http_response_code(404);
-                    echo json_encode(["error" => "Estudiante no encontrado"]);
+                    echo json_encode(["error" => "Docente no encontrado"]);
                 }
 
                 /*
-                sino ha sido seleccionado la cedula del estudiante, muestrame todos los estudiantes almacenados en la base de datos.
+                sino ha sido seleccionado la cedula del docente, muestrame todos los docentes almacenados en la base de datos.
                 */
 
             } else {
-                $stmt = $pdo->query("SELECT id_estudiante, id_tipo, cedula_identidad, nombres_estudiante, apellidos_estudiante, fecha_nacimiento, correo_personal, direccion_habitacion, telefono_personal, fecha_ingreso, id_estatus FROM unexca_db.datos_estudiantes");
-                $estudiantes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                echo json_encode($estudiantes);
+                $stmt = $pdo->query("SELECT id_docente, id_tipo, cedula_docente, nombres, apellidos, fecha_nacimiento, correo_personal, direccion_habitacion, telefono_personal, fecha_ingreso, id_estatus FROM unexca_db.datos_docentes");
+                $docentes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                echo json_encode($docentes);
             }
         } catch (PDOException $e) {
             /*
-            en caso de un error en la busqueda de los estudiantes, captura el error y muestralo en pantalla.
+            en caso de un error en la busqueda de los docentes, captura el error y muestralo en pantalla.
             */
             http_response_code(500);
             echo json_encode([
@@ -61,7 +61,7 @@ switch ($method) {
             $json = file_get_contents('php://input');
             $input = json_decode($json, true);
 
-            $campos_requeridos = ['cedula_identidad', 'id_tipo', 'nombres_estudiante', 'apellidos_estudiante', 'genero', 'correo_personal'];
+            $campos_requeridos = ['cedula_docente', 'id_tipo', 'nombres', 'apellidos', 'genero', 'correo_personal'];
             foreach ($campos_requeridos as $campo) {
                 if (empty(trim((string) ($input[$campo] ?? '')))) {
                     http_response_code(400);
@@ -78,7 +78,7 @@ switch ($method) {
 
             /*
             luego, creamos una validacion para saber si existe el campo de correos y verificamos si el correo que el usuario
-            esta suministrandoen en el campo es valido.
+            esta suministrando en en el campo es valido.
             */
             $email = isset($input['correo_personal']) ? trim($input['correo_personal']) : '';
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -92,8 +92,8 @@ switch ($method) {
              * prepraramos una consulta a la base de datos, seleccionamos y contamos los usuarios mientras la cedula o correo ingresada por el usuario
              * no esten registradas en la base de datos
              */
-            $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.datos_estudiantes WHERE cedula_identidad = ? OR correo_personal = ?");
-            $checkStmt->execute([$input['cedula_identidad'], $input['correo_personal']]);
+            $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.datos_docentes WHERE cedula_docente = ? OR correo_personal = ?");
+            $checkStmt->execute([$input['cedula_docente'], $input['correo_personal']]);
             if ($checkStmt->fetchColumn() > 0) {
                 http_response_code(409);
                 echo json_encode(["error" => "La cédula o el correo ya existen."]);
@@ -104,15 +104,15 @@ switch ($method) {
             /*
              * insertamos lo datos enviados del usuario a la base de datos y enviamos un mensaje de exito si fue un 201.
              */
-            $sql = "INSERT INTO unexca_db.datos_estudiantes (cedula_identidad, id_tipo, nombres_estudiante, apellidos_estudiante, genero, fecha_nacimiento, correo_personal, telefono_personal, direccion_habitacion, fecha_ingreso)
-                VALUES (:cedula_identidad, :id_tipo, :nombres_estudiante, :apellidos_estudiante, :genero, :fecha_nacimiento, :correo_personal, :telefono_personal, :direccion_habitacion, :fecha_ingreso)";
+            $sql = "INSERT INTO unexca_db.datos_docentes (cedula_docente, id_tipo, nombres, apellidos, genero, fecha_nacimiento, correo_personal, telefono_personal, direccion_habitacion, fecha_ingreso)
+                VALUES (:cedula_docente, :id_tipo, :nombres, :apellidos, :genero, :fecha_nacimiento, :correo_personal, :telefono_personal, :direccion_habitacion, :fecha_ingreso)";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                'cedula_identidad' => trim($input['cedula_identidad']),
+                'cedula_docente' => trim($input['cedula_docente']),
                 'id_tipo' => trim($input['id_tipo']),
-                'nombres_estudiante' => trim($input['nombres_estudiante']),
-                'apellidos_estudiante' => trim($input['apellidos_estudiante']),
+                'nombres' => trim($input['nombres']),
+                'apellidos' => trim($input['apellidos']),
                 'genero' => trim($input['genero']),
                 'fecha_nacimiento' => trim($input['fecha_nacimiento']),
                 'correo_personal' => trim($input['correo_personal']),
@@ -122,12 +122,12 @@ switch ($method) {
             ]);
 
             http_response_code(201);
-            echo json_encode(["message" => "Estudiante creado exitosamente"]);
+            echo json_encode(["message" => "Docente creado exitosamente"]);
 
         } catch (PDOException $e) {
             error_log($e->getMessage());
             http_response_code(500);
-            echo json_encode(["error" => "Error interno al crear el estudiante"]);
+            echo json_encode(["error" => "Error interno al crear el docente"]);
         }
         break;
 
@@ -135,27 +135,27 @@ switch ($method) {
 
         $input = json_decode(file_get_contents('php://input'), true);
 
-        $id_estudiante = filter_input(INPUT_GET, 'cedula_identidad', FILTER_SANITIZE_STRING);
+        $id_docente = filter_input(INPUT_GET, 'cedula_docente', FILTER_SANITIZE_STRING);
 
-        if (!$id_estudiante) {
+        if (!$id_docente) {
             http_response_code(400);
-            echo json_encode(["error" => "la cédula del estudiante no es válida"]);
+            echo json_encode(["error" => "la cédula del docente no es válida"]);
             break;
         }
 
-        $checkExist = $pdo->prepare("SELECT cedula_identidad FROM unexca_db.datos_estudiantes WHERE cedula_identidad = :cedula");
-        $checkExist->execute(['cedula' => $id_estudiante]);
+        $checkExist = $pdo->prepare("SELECT cedula_docente FROM unexca_db.datos_docentes WHERE cedula_docente = :cedula");
+        $checkExist->execute(['cedula' => $id_docente]);
         if (!$checkExist->fetch()) {
             http_response_code(404);
-            echo json_encode(["error" => "Estudiante no encontrado"]);
+            echo json_encode(["error" => "Docente no encontrado"]);
             break;
         }
 
 
         $campos_requeridos = [
-            'cedula_identidad',
-            'nombres_estudiante',
-            'apellidos_estudiante',
+            'cedula_docente',
+            'nombres',
+            'apellidos',
             'genero',
             'fecha_nacimiento',
             'correo_personal',
@@ -171,27 +171,27 @@ switch ($method) {
             }
         }
 
-        $checkDup = $pdo->prepare("SELECT cedula_identidad FROM unexca_db.datos_estudiantes
-                                   WHERE (cedula_identidad = :c OR correo_personal = :e)
-                                   AND cedula_identidad != :id");
+        $checkDup = $pdo->prepare("SELECT cedula_docente FROM unexca_db.datos_docentes
+                                   WHERE (cedula_docente = :c OR correo_personal = :e)
+                                   AND cedula_docente != :id");
         $checkDup->execute([
-            'c' => $input['cedula_identidad'],
+            'c' => $input['cedula_docente'],
             'e' => $input['correo_personal'],
-            'id' => $id_estudiante
+            'id' => $id_docente
         ]);
 
         if ($checkDup->fetch()) {
             http_response_code(409);
-            echo json_encode(["error" => "La cédula o el correo ya están en uso por otro estudiante."]);
+            echo json_encode(["error" => "La cédula o el correo ya están en uso por otro docente."]);
             break;
         }
 
         try {
 
-            $sql = "UPDATE unexca_db.datos_estudiantes
-                    SET cedula_identidad = :cedula,
-                        nombres_estudiante = :nombres,
-                        apellidos_estudiante = :apellidos,
+            $sql = "UPDATE unexca_db.datos_docentes
+                    SET cedula_docente = :cedula,
+                        nombres = :nombres,
+                        apellidos = :apellidos,
                         genero = :genero,
                         fecha_nacimiento = :fecha_nacimiento,
                         correo_personal = :correo,
@@ -200,12 +200,12 @@ switch ($method) {
                         fecha_ingreso = :fecha,
                         id_estatus = :estatus,
                         actualizado_en = NOW()
-                    WHERE cedula_identidad = :id";
+                    WHERE cedula_docente = :id";
 
             $params = [
-                'cedula' => trim($input['cedula_identidad']),
-                'nombres' => trim($input['nombres_estudiante']),
-                'apellidos' => trim($input['apellidos_estudiante']),
+                'cedula' => trim($input['cedula_docente']),
+                'nombres' => trim($input['nombres']),
+                'apellidos' => trim($input['apellidos']),
                 'genero' => trim($input['genero']),
                 'fecha_nacimiento' => trim($input['fecha_nacimiento']),
                 'correo' => trim($input['correo_personal']),
@@ -213,13 +213,13 @@ switch ($method) {
                 'direccion' => trim($input['direccion_habitacion']),
                 'fecha' => trim($input['fecha_ingreso']),
                 'estatus' => isset($input['id_estatus']) ? trim($input['id_estatus']) : null,
-                'id' => $id_estudiante
+                'id' => $id_docente
             ];
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
 
-            echo json_encode(["message" => "Estudiante ha sido actualizado con éxito"]);
+            echo json_encode(["message" => "Docente ha sido actualizado con éxito"]);
 
         } catch (PDOException $e) {
             http_response_code(500);
