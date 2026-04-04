@@ -167,25 +167,18 @@ CREATE TABLE unexca_db.inscripciones (
 
 CREATE TABLE unexca_db.aranceles (
     id_arancel SERIAL PRIMARY KEY,
+    id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
     descripcion VARCHAR(100) NOT NULL,
-    monto DECIMAL(12,2) NOT NULL,
-    activo BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE unexca_db.estatus_pago (
-	id_estatus_pago SERIAL PRIMARY KEY,
-	descripcion TEXT,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    monto DECIMAL(12,2) NOT NULL
 );
 
 CREATE TABLE unexca_db.pagos (
     id_pago SERIAL PRIMARY KEY,
-    id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
     id_arancel INTEGER REFERENCES unexca_db.aranceles(id_arancel) ON DELETE CASCADE,
-	id_estatus INTEGER REFERENCES unexca_db.estatus_pago(id_estatus_pago) ON DELETE CASCADE,
+	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
 	nombre_banco VARCHAR(50) NOT NULL,
     referencia_bancaria VARCHAR(50) UNIQUE NOT NULL,
-    fecha_pago DATE NOT NULL,
+    fecha_pago DATE NOT NULL
 );
 
 
@@ -336,3 +329,52 @@ SELECT
     'Caracas, Municipio Libertador, Sector ' || floor(random() * 100 + 1),
     '2024-01-15'::date + (floor(random() * 365) || ' days')::interval -- Fechas de ingreso en el último año
 FROM generate_series(1, 50) s(i);
+
+INSERT INTO unexca_db.estatus (nombre_estatus, descripcion) VALUES
+-- Estados de Usuario/Estudiante
+('Activo', 'El estudiante o usuario se encuentra con todos sus privilegios vigentes.'),
+('Inactivo', 'El usuario no tiene acceso al sistema, posiblemente por retiro voluntario.'),
+('Graduado', 'El estudiante ha completado satisfactoriamente toda su carga académica.'),
+('Suspendido', 'Acceso restringido por motivos disciplinarios o administrativos.'),
+
+-- Estados de Procesos Académicos (Inscripciones/Solicitudes)
+('Pendiente', 'La solicitud ha sido enviada y espera revisión por parte de control de estudios.'),
+('En Revisión', 'El proceso está siendo validado por el personal administrativo.'),
+('Aprobado', 'La solicitud o documento ha sido validado satisfactoriamente.'),
+('Rechazado', 'La solicitud no cumple con los requisitos necesarios.'),
+
+-- Estados de Materias/Cursos
+('Cursando', 'La asignatura se encuentra actualmente en desarrollo.'),
+('Retirada', 'La asignatura fue desincorporada por el estudiante dentro de los lapsos permitidos.'),
+('Reprobada', 'El estudiante no alcanzó la nota mínima aprobatoria.'),
+('Convalidada', 'La asignatura fue aprobada mediante proceso de equivalencia o acreditación.'), 
+
+-- Estados de Pagos y Aranceles
+('Pago Pendiente', 'El arancel ha sido generado pero aún no se ha registrado ningún comprobante.'),
+('Pago Reportado', 'El estudiante cargó el soporte de pago y espera validación administrativa.'),
+('Pago Conciliado', 'El pago ha sido verificado en la cuenta bancaria de la institución.'),
+('Pago Rechazado', 'El soporte de pago es inválido, ilegible o el monto es incorrecto.'),
+('Exonerado', 'El estudiante cuenta con un beneficio o beca que cubre el costo del arancel.'),
+('Reembolsado', 'El monto del arancel fue devuelto al estudiante por anulación de proceso.');
+
+INSERT INTO unexca_db.aranceles (id_estatus, descripcion, monto) VALUES
+-- Aranceles de Inscripción y Carnetización
+(1, 'Inscripción de Nuevo Ingreso - Pregrado', 150.00),
+(1, 'Reinscripción Semestral / Trayecto', 100.00),
+(1, 'Emisión de Carnet Estudiantil', 50.00),
+
+-- Aranceles de Documentación Académica
+(1, 'Constancia de Estudios', 30.00),
+(1, 'Certificación de Calificaciones (Notas)', 80.00),
+(1, 'Pensum y Programa de Estudio', 120.00),
+(1, 'Carga Horaria / Horas Lectivas', 40.00),
+
+-- Aranceles de Grado y Egreso
+(1, 'Derecho a Acto de Grado', 500.00),
+(1, 'Paquete de Título y Medalla', 350.00),
+(1, 'Certificación de Título (Fondo Negro)', 60.00),
+
+-- Otros Trámites
+(1, 'Examen de Suficiencia / Reparación', 45.00),
+(1, 'Equivalencia de Estudios (Por materia)', 25.00),
+(1, 'Solicitud de Cambio de Carrera', 70.00);
