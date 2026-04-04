@@ -18,7 +18,7 @@ switch ($method) {
                     break;
                 }
 
-                $stmt = $pdo->prepare("SELECT id_seccion, id_horario, cod_seccion, capacidad_max, creado_en, actualizado_en
+                $stmt = $pdo->prepare("SELECT id_seccion, cod_seccion, capacidad_max, creado_en, actualizado_en
                                        FROM unexca_db.secciones
                                        WHERE cod_seccion = :cod_seccion");
 
@@ -33,7 +33,7 @@ switch ($method) {
 
 
             } else {
-                $stmt = $pdo->query("SELECT id_seccion, id_horario, cod_seccion, capacidad_max, creado_en, actualizado_en FROM unexca_db.secciones ORDER BY id_seccion ASC");
+                $stmt = $pdo->query("SELECT id_seccion, cod_seccion, capacidad_max, creado_en, actualizado_en FROM unexca_db.secciones ORDER BY id_seccion ASC");
                 $secciones = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 echo json_encode($secciones);
             }
@@ -50,33 +50,39 @@ switch ($method) {
         try {
             $input = json_decode(file_get_contents('php://input'), true);
 
-            $campos_requeridos = ['id_horario', 'cod_seccion'];
+            $campos_requeridos = ['cod_seccion', 'capacidad_max'];
             foreach ($campos_requeridos as $campo) {
-                $valor = trim((string) ($input[$campo] ?? ''));
+                
+                $valor = isset($input[$campo]) ? trim((string) $input[$campo]) : '';
 
-                if (empty($valor)) {
+                if ($valor === '') {
                     http_response_code(400);
                     echo json_encode(["error" => "El campo '$campo' es obligatorio."]);
                     exit;
                 }
             }
 
+            if (!is_numeric($input['capacidad_max'])) {
+                http_response_code(400);
+                echo json_encode(["error" => "La capacidad máxima debe ser un número entero."]);
+                exit;
+            }
+
             $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.secciones WHERE cod_seccion = ?");
-            $checkStmt->execute([$input['cod_seccion']]);
+            $checkStmt->execute([trim($input['cod_seccion'])]);
             if ($checkStmt->fetchColumn() > 0) {
                 http_response_code(409);
                 echo json_encode(["error" => "El código de sección ya existe."]);
                 exit;
             }
 
-            $sql = "INSERT INTO unexca_db.secciones (id_horario, cod_seccion, capacidad_max)
-                VALUES (:id_horario, :cod_seccion, :capacidad_max)";
+            $sql = "INSERT INTO unexca_db.secciones (cod_seccion, capacidad_max)
+                VALUES (:cod_seccion, :capacidad_max)";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                'id_horario' => trim($input['id_horario']),
                 'cod_seccion' => trim($input['cod_seccion']),
-                'capacidad_max' => trim($input['capacidad_max'])
+                'capacidad_max' => (int) $input['capacidad_max']
             ]);
 
             http_response_code(201);
@@ -85,22 +91,20 @@ switch ($method) {
         } catch (PDOException $e) {
             error_log($e->getMessage());
             http_response_code(500);
-            echo json_encode(["error" => "Error interno al crear la sección"]);
+            echo json_encode(["error" => "Error interno al crear la sección", "detalle" => $e->getMessage()]);
         }
         break;
 
     case "PUT":
         $input = json_decode(file_get_contents('php://input'), true);
-        // Capturamos el código que viene por URL (el identificador actual)
         $cod_seccion = filter_input(INPUT_GET, 'cod_seccion', FILTER_SANITIZE_STRING);
 
         if (!$cod_seccion) {
             http_response_code(400);
-            echo json_encode(["error" => "El código de sección en la URL es obligatorio."]);
+            echo json_encode(["error" => "El código de sección es obligatorio."]);
             break;
         }
 
-        // 1. Verificar si la sección que queremos editar existe
         $checkExist = $pdo->prepare("SELECT id_seccion FROM unexca_db.secciones WHERE cod_seccion = :cod");
         $checkExist->execute(['cod' => $cod_seccion]);
         if (!$checkExist->fetch()) {
@@ -109,8 +113,7 @@ switch ($method) {
             break;
         }
 
-        // 2. Validar campos obligatorios del BODY
-        $campos_requeridos = ['id_horario', 'cod_seccion', 'capacidad_max'];
+        $campos_requeridos = ['cod_seccion'];
         foreach ($campos_requeridos as $campo) {
             if (empty(trim((string) ($input[$campo] ?? '')))) {
                 http_response_code(400);
@@ -119,8 +122,6 @@ switch ($method) {
             }
         }
 
-        // 3. Validar duplicados (Solo por cod_seccion, quitamos capacidad_max de aquí)
-        // Buscamos si el NUEVO código ya existe en OTRA sección que no sea la actual
         $checkDup = $pdo->prepare("SELECT cod_seccion FROM unexca_db.secciones 
                                WHERE cod_seccion = :nuevo_cod 
                                AND cod_seccion != :cod_actual");
@@ -136,17 +137,14 @@ switch ($method) {
         }
 
         try {
-            // 4. Ejecutar el UPDATE
             $sql = "UPDATE unexca_db.secciones 
-                SET id_horario = :id_h, 
-                    cod_seccion = :nuevo_cod, 
+                SET cod_seccion = :nuevo_cod, 
                     capacidad_max = :cap,
                     actualizado_en = CURRENT_TIMESTAMP
                 WHERE cod_seccion = :cod_url";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                'id_h' => $input['id_horario'],
                 'nuevo_cod' => $input['cod_seccion'],
                 'cap' => $input['capacidad_max'],
                 'cod_url' => $cod_seccion

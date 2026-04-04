@@ -1,4 +1,4 @@
-CREATE TABLE unexca_db.tipos_usuario (
+CREATE TABLE unexca_db.tipos_usuario ( --terminado
     id_tipo SERIAL PRIMARY KEY,
     nombre_tipo VARCHAR(50) UNIQUE NOT NULL,
 	descripcion TEXT
@@ -75,9 +75,9 @@ CREATE TABLE unexca_db.periodo_academico (
     CONSTRAINT check_fechas CHECK (fecha_final > fecha_inicio)
 );
 
+
 CREATE TABLE unexca_db.secciones (
     id_seccion SERIAL PRIMARY KEY,
-    id_horario INTEGER REFERENCES unexca_db.horarios(id_horario) ON DELETE CASCADE,
     cod_seccion VARCHAR(15) NOT NULL,
     capacidad_max INTEGER DEFAULT 40,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -85,18 +85,23 @@ CREATE TABLE unexca_db.secciones (
     CONSTRAINT check_capacidad_max CHECK (capacidad_max >= 0 AND capacidad_max <= 40)
 );
 
+select * from unexca_db.horarios;
+
 CREATE TABLE unexca_db.horarios (
 	id_horario SERIAL PRIMARY KEY,
 	id_asignatura INTEGER REFERENCES unexca_db.asignatura(id_asignatura) ON DELETE CASCADE,
+	id_seccion INTEGER REFERENCES unexca_db.secciones(id_seccion) ON DELETE CASCADE,
 	id_docente INTEGER REFERENCES unexca_db.datos_docentes(id_docente) ON DELETE CASCADE,
 	id_aula INTEGER REFERENCES unexca_db.aulas(id_aula) ON DELETE CASCADE,
 	id_turno INTEGER REFERENCES unexca_db.turnos(id_turno) ON DELETE CASCADE,
 	id_trayecto INTEGER REFERENCES unexca_db.trayectos(id_trayecto) ON DELETE CASCADE,
+	cod_horario VARCHAR(20) NOT NULL,
 	hora_inicio TIME NOT NULL,
 	hora_fin TIME NOT NULL,
 	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	actualizado_en TIMESTAMP
 );
+
 
 CREATE TABLE unexca_db.asignatura (
     id_asignatura SERIAL PRIMARY KEY,
@@ -108,8 +113,6 @@ CREATE TABLE unexca_db.asignatura (
 	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	actualizado_en TIMESTAMP
 );
-SELECT * FROM unexca_db.pnf;
-SELECT * FROM unexca_db.trayectos;
 
 CREATE TABLE unexca_db.turnos (
 	id_turno SERIAL PRIMARY KEY,
@@ -236,7 +239,13 @@ CREATE TABLE unexca_db.semestre_actual (
 	actulizado_en TIMESTAMP
 );
 
-SELECT * FROM unexca_db.pnf;
+select cedula_identidad, nombres_estudiante, apellidos_estudiante, direccion_habitacion 
+from unexca_db.datos_estudiantes 
+where nombres_estudiante = 'Carlos';
+
+SELECT * FROM unexca_db.secciones order by id_seccion asc;
+select * from unexca_db.horarios;
+
 
 INSERT INTO unexca_db.trayectos (cod_trayecto, descripcion) VALUES
 ('1-1', 'Trayecto 1, semetre 1 TSU'),
@@ -277,28 +286,28 @@ INSERT INTO unexca_db.aulas (piso, nro_aula, nombre_aula) VALUES
 ('Piso 6', '606', 'Aula 606'), ('Piso 6', '607', 'Aula 607'), ('Piso 6', '608', 'Aula 608'), ('Piso 6', '609', 'Aula 609'), ('Piso 6', '610', 'Aula 610');
 
 INSERT INTO unexca_db.horarios 
-(id_asignatura, id_docente, id_aula, id_turno, id_trayecto, cod_horario, hora_inicio, hora_fin) 
+(id_asignatura, id_seccion, id_docente, id_aula, id_turno, id_trayecto, cod_horario, hora_inicio, hora_fin) 
 VALUES
 -- Actividades Acreditables
-(1, 10, 1, 1, 1, 'AAC6012-M1', '07:30:00', '09:00:00'),
+(1, 1, 1, 1, 1, 1, 'AAC6012-M1', '07:30:00', '09:00:00'),
 
 -- Algorítmica y Programación
-(2, 2, 5, 1, 1, 'APT150151-M1', '09:00:00', '11:15:00'),
+(2, 1, 2, 5, 1, 1, 'APT150151-M1', '09:00:00', '11:15:00'),
 
 -- Arquitectura del Computador
-(3, 3, 8, 1, 1, 'ACT150151-M1', '11:15:00', '12:45:00'),
+(3, 1, 3, 8, 1, 1, 'ACT150151-M1', '11:15:00', '12:45:00'),
 
 -- Formación Crítica I
-(4, 4, 2, 2, 1, 'FCS120141-T1', '13:30:00', '15:00:00'),
+(4, 1, 4, 2, 2, 1, 'FCS120141-T1', '13:30:00', '15:00:00'),
 
 -- Inglés I
-(5, 5, 3, 2, 1, 'IDC60121-T1', '15:00:00', '16:30:00'),
+(5, 1, 5, 3, 2, 1, 'IDC60121-T1', '15:00:00', '16:30:00'),
 
 -- Matemática I
-(6, 6, 5, 1, 1, 'MAC90131-M1', '07:30:00', '09:45:00'),
+(6, 1, 6, 5, 1, 1, 'MAC90131-M1', '07:30:00', '09:45:00'),
 
 -- Proyecto Socio Tecnológico I
-(7, 7, 10, 1, 1, 'PTP270191-M1', '09:45:00', '12:45:00');
+(7, 1, 7, 10, 1, 1, 'PTP270191-M1', '09:45:00', '12:45:00');
 
 
 INSERT INTO unexca_db.datos_estudiantes (
