@@ -276,3 +276,54 @@ INSERT INTO unexca_db.aulas (piso, nro_aula, nombre_aula) VALUES
 ('Piso 6', '601', 'Aula 601'), ('Piso 6', '602', 'Aula 602'), ('Piso 6', '603', 'Aula 603'), ('Piso 6', '604', 'Aula 604'), ('Piso 6', '605', 'Aula 605'),
 ('Piso 6', '606', 'Aula 606'), ('Piso 6', '607', 'Aula 607'), ('Piso 6', '608', 'Aula 608'), ('Piso 6', '609', 'Aula 609'), ('Piso 6', '610', 'Aula 610');
 
+INSERT INTO unexca_db.horarios 
+(id_asignatura, id_docente, id_aula, id_turno, id_trayecto, cod_horario, hora_inicio, hora_fin) 
+VALUES
+-- Actividades Acreditables
+(1, 10, 1, 1, 1, 'AAC6012-M1', '07:30:00', '09:00:00'),
+
+-- Algorítmica y Programación
+(2, 2, 5, 1, 1, 'APT150151-M1', '09:00:00', '11:15:00'),
+
+-- Arquitectura del Computador
+(3, 3, 8, 1, 1, 'ACT150151-M1', '11:15:00', '12:45:00'),
+
+-- Formación Crítica I
+(4, 4, 2, 2, 1, 'FCS120141-T1', '13:30:00', '15:00:00'),
+
+-- Inglés I
+(5, 5, 3, 2, 1, 'IDC60121-T1', '15:00:00', '16:30:00'),
+
+-- Matemática I
+(6, 6, 5, 1, 1, 'MAC90131-M1', '07:30:00', '09:45:00'),
+
+-- Proyecto Socio Tecnológico I
+(7, 7, 10, 1, 1, 'PTP270191-M1', '09:45:00', '12:45:00');
+
+
+INSERT INTO unexca_db.datos_estudiantes (
+    id_tipo, 
+    id_estatus, 
+    cedula_identidad, 
+    nombres_estudiante, 
+    apellidos_estudiante, 
+    genero, 
+    fecha_nacimiento, 
+    correo_personal, 
+    telefono_personal, 
+    direccion_habitacion, 
+    fecha_ingreso
+)
+SELECT 
+    5, -- id_tipo fijo para estudiantes
+    2, -- estatus por defecto
+    floor(random() * (35000000 - 20000000 + 1) + 20000000)::int, -- Cédulas entre 20M y 35M
+    (ARRAY['Aarón', 'Beatriz', 'Carlos', 'Diana', 'Eduardo', 'Fabiola', 'Gabriel', 'Héctor', 'Irene', 'José'])[floor(random() * 10 + 1)],
+    (ARRAY['Martínez', 'Rodríguez', 'Pérez', 'Hernández', 'García', 'López', 'Sánchez', 'González', 'Ramírez', 'Torres'])[floor(random() * 10 + 1)],
+    (ARRAY['Masculino', 'Femenino'])[floor(random() * 2 + 1)],
+    CURRENT_DATE - (floor(random() * (25 - 17 + 1) + 17) || ' years')::interval, -- Edad entre 17 y 25 años
+    'user' || i || floor(random() * 1000) || '@example.com',
+    '0414-' || floor(random() * (9999999 - 1000000 + 1) + 1000000)::int,
+    'Caracas, Municipio Libertador, Sector ' || floor(random() * 100 + 1),
+    '2024-01-15'::date + (floor(random() * 365) || ' days')::interval -- Fechas de ingreso en el último año
+FROM generate_series(1, 50) s(i);
