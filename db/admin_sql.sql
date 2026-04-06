@@ -132,7 +132,7 @@ CREATE TABLE unexca_db.aulas (
 CREATE TABLE unexca_db.datos_estudiantes (
     id_estudiante SERIAL PRIMARY KEY,
 	id_tipo INTEGER REFERENCES unexca_db.tipos_usuario(id_tipo) ON DELETE CASCADE,
-	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE DEFAULT 2,
+	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
 	cedula_identidad INT UNIQUE NOT NULL,
 	nombres_estudiante VARCHAR(100) NOT NULL,
 	apellidos_estudiante VARCHAR(100) NOT NULL,
@@ -151,6 +151,19 @@ CREATE TABLE unexca_db.expediente_estudiante (
 	id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
 	cod_expediente VARCHAR(50) UNIQUE NOT NULL,
 	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE unexca_db.inscripcion_nue_ingreso (
+    id_inscripcion SERIAL PRIMARY KEY,
+    id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
+    id_periodo INTEGER REFERENCES unexca_db.periodos_academicos(id) ON DELETE CASCADE,
+    id_seccion INTEGER REFERENCES unexca_db.secciones(id_seccion) ON DELETE CASCADE,
+    id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
+    id_sede INTEGER REFERENCES unexca_db.sedes_unexca(id_sede) ON DELETE CASCADE,
+    id_trayecto INTEGER REFERENCES unexca_db.trayectos(id_trayecto) ON DELETE CASCADE,
+    id_estatus_inscripcion INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
+    fecha_formalizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unico_estudiante_periodo UNIQUE(id_estudiante, id_periodo)
 );
 
 
@@ -176,11 +189,38 @@ CREATE TABLE unexca_db.pagos (
     id_pago SERIAL PRIMARY KEY,
     id_arancel INTEGER REFERENCES unexca_db.aranceles(id_arancel) ON DELETE CASCADE,
 	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
+	id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
 	nombre_banco VARCHAR(50) NOT NULL,
-    referencia_bancaria VARCHAR(50) UNIQUE NOT NULL,
+    referencia_bancaria varchar(100) UNIQUE NOT NULL,
     fecha_pago DATE NOT NULL
 );
 
+CREATE TABLE unexca_db.estudiante_requisitos (
+    id SERIAL PRIMARY KEY,
+    id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
+    id_requisito INTEGER REFERENCES unexca_db.requisitos(id_requisito) ON DELETE CASCADE,
+	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE, 
+    url_archivo TEXT,
+    fecha_entrega TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    observaciones TEXT, -- Ej: "La foto está borrosa"
+    actualizado_en TIMESTAMP
+);
+
+CREATE TABLE unexca_db.requisitos (
+    id_requisito SERIAL PRIMARY KEY,
+    nombre_requisito VARCHAR(100) NOT NULL,
+	categoria_estudiante VARCHAR(50),
+    descripcion TEXT,
+    es_obligatorio BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE unexca_db.periodos_academicos (
+	id SERIAL PRIMARY KEY,
+	periodo_academico VARCHAR(15) NOT NULL,
+	ano_en_curso VARCHAR(15) NOT NULL,
+	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	actulizado_en TIMESTAMP
+);
 
 CREATE TABLE unexca_db.permisos (
     id_permiso SERIAL PRIMARY KEY,
@@ -337,12 +377,6 @@ INSERT INTO unexca_db.estatus (nombre_estatus, descripcion) VALUES
 ('Graduado', 'El estudiante ha completado satisfactoriamente toda su carga académica.'),
 ('Suspendido', 'Acceso restringido por motivos disciplinarios o administrativos.'),
 
--- Estados de Procesos Académicos (Inscripciones/Solicitudes)
-('Pendiente', 'La solicitud ha sido enviada y espera revisión por parte de control de estudios.'),
-('En Revisión', 'El proceso está siendo validado por el personal administrativo.'),
-('Aprobado', 'La solicitud o documento ha sido validado satisfactoriamente.'),
-('Rechazado', 'La solicitud no cumple con los requisitos necesarios.'),
-
 -- Estados de Materias/Cursos
 ('Cursando', 'La asignatura se encuentra actualmente en desarrollo.'),
 ('Retirada', 'La asignatura fue desincorporada por el estudiante dentro de los lapsos permitidos.'),
@@ -355,7 +389,25 @@ INSERT INTO unexca_db.estatus (nombre_estatus, descripcion) VALUES
 ('Pago Conciliado', 'El pago ha sido verificado en la cuenta bancaria de la institución.'),
 ('Pago Rechazado', 'El soporte de pago es inválido, ilegible o el monto es incorrecto.'),
 ('Exonerado', 'El estudiante cuenta con un beneficio o beca que cubre el costo del arancel.'),
-('Reembolsado', 'El monto del arancel fue devuelto al estudiante por anulación de proceso.');
+('Reembolsado', 'El monto del arancel fue devuelto al estudiante por anulación de proceso.'),
+
+-- Estados de Requisitos y Documentos de Procesos Académicos (Inscripciones/Solicitudes)
+('Entregado', 'El estudiante ha cumplido con la entrega de requisitos o documentos solicitados.'),
+('Pendiente', 'La solicitud ha sido enviada y espera revisión por parte de control de estudios.'),
+('En Revisión', 'El proceso está siendo validado por el personal administrativo.'),
+('Rechazado', 'La solicitud no cumple con los requisitos necesarios.');
+
+-- Estados de Inscripciones y Trayectos
+('Inscrito', 'El estudiante se encuentra actualmente inscrito en la sección.'),
+('Retirado', 'El estudiante se retiró de la sección dentro del período permitido.'),
+('Aprobado', 'El estudiante aprobó la sección con una nota final igual o superior a 10.00.'),
+('Reprobado', 'El estudiante no alcanzó la nota mínima aprobatoria en la sección.'),
+('Convalidado', 'La sección fue aprobada mediante proceso de equivalencia o acreditación.'),
+('Preinscrito', 'El aspirante ha completado el proceso de preinscripción pero aún no ha formalizado su inscripción.'),
+('Regular', 'El estudiante está inscrito pero no ha cumplido con los requisitos académicos para avanzar al siguiente trayecto.'),
+('Nuevo Ingreso', 'El estudiante es un nuevo ingreso que aún no ha formalizado su inscripción.'),
+('Egresado', 'El estudiante ha completado satisfactoriamente toda su carga académica y ha egresado de la institución.');
+
 
 INSERT INTO unexca_db.aranceles (id_estatus, descripcion, monto) VALUES
 -- Aranceles de Inscripción y Carnetización
@@ -378,3 +430,13 @@ INSERT INTO unexca_db.aranceles (id_estatus, descripcion, monto) VALUES
 (1, 'Examen de Suficiencia / Reparación', 45.00),
 (1, 'Equivalencia de Estudios (Por materia)', 25.00),
 (1, 'Solicitud de Cambio de Carrera', 70.00);
+
+INSERT INTO unexca_db.requisitos (nombre_requisito, categoria_estudiante, descripcion, es_obligatorio)
+VALUES 
+('Título de Bachiller', 'Nuevo Ingreso', 'Copia fondo negro y original a la vista del título de educación media general.', TRUE),
+('Notas Certificadas', 'Nuevo Ingreso', 'Certificación de calificaciones de 1ro a 5to año debidamente firmadas y selladas.', TRUE),
+('Partida de Nacimiento', 'Nuevo Ingreso', 'Copia legible de la partida de nacimiento (algunas instituciones piden que sea original/actualizada).', TRUE),
+('Cédula de Identidad', 'Nuevo Ingreso', 'Fotocopia ampliada de la cédula de identidad vigente.', TRUE),
+('Certificado de Participación OPSU', 'Nuevo Ingreso', 'Comprobante de registro en el Sistema Nacional de Ingreso a la Educación Universitaria.', TRUE),
+('Fotos tipo Carnet', 'Nuevo Ingreso', 'Dos (02) fotos recientes de frente, tamaño carnet.', FALSE),
+('Constancia de Residencia', 'Nuevo Ingreso', 'Documento que valide la dirección de domicilio del aspirante.', FALSE);
