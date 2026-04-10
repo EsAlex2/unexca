@@ -166,7 +166,6 @@ CREATE TABLE unexca_db.inscripcion_nue_ingreso (
     CONSTRAINT unico_estudiante_periodo UNIQUE(id_estudiante, id_periodo)
 );
 
-
 CREATE TABLE unexca_db.inscripciones (
     id_inscripcion SERIAL PRIMARY KEY,
     id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
@@ -279,12 +278,28 @@ where nombres_estudiante = 'Carlos';
 SELECT * FROM unexca_db.secciones order by id_seccion asc;
 select * from unexca_db.horarios;
 
+INSERT INTO unexca_db.tipos_usuario (nombre_tipo, descripcion) VALUES
+('Administrador', 'Superusuario con permisos totales sobre la plataforma y base de datos.'),
+('Estudiante', 'Usuario regular inscrito en programas académicos, consulta notas y horarios.'),
+('Docente', 'Personal académico encargado de impartir materias y cargar calificaciones.'),
+('Control de Estudios', 'Personal administrativo que gestiona expedientes académicos y certificaciones.'),
+('Finanzas', 'Personal encargado de la recepción de pagos y validación de solvencias.');
+
+
+INSERT INTO unexca_db.pnf (id_sede, cod_pnf, nombre_pnf, descripcion, duracion_pnf, unidad_total_creditos) VALUES
+(1, 'PNF-ADM', 'PNF en Administración', 'Formación en gestión y dirección de organizaciones.', 4, 180),
+(1, 'PNF-CP', 'PNF en Contaduría Pública', 'Formación en sistemas de información contable y financiera.', 4, 185),
+(2, 'PNF-DL', 'PNF en Distribución y Logística', 'Gestión de cadenas de suministro y procesos logísticos.', 4, 175),
+(3, 'PNF-EE', 'PNF en Educación Especial | Lenguaje de señas', 'Especialización en atención a la diversidad y comunicación inclusiva.', 4, 170),
+(1, 'PNF-INF', 'PNF en Ingeniería Informática', 'Desarrollo de software, redes y soluciones tecnológicas.', 4, 190),
+(4, 'PNF-TUR', 'PNF en Turismo', 'Gestión de servicios turísticos y desarrollo sustentable.', 4, 165);
 
 INSERT INTO unexca_db.trayectos (cod_trayecto, descripcion) VALUES
-('1-1', 'Trayecto 1, semetre 1 TSU'),
-('1-2', 'Trayecto 1, semetre 2 TSU'),
-('2-1', 'Trayecto 2, semetre 1 TSU'),
-('2-2', 'Trayecto 2, semetre 2 TSU'),
+('T-I', 'Trayecto Inicial, cursos introductorios'),
+('1-1', 'Trayecto 1, semetre 1'),
+('1-2', 'Trayecto 1, semetre 2 '),
+('2-1', 'Trayecto 2, semetre 1'),
+('2-2', 'Trayecto 2, semetre 2'),
 ('3-1', 'Trayecto 3, semetre 1'),
 ('3-2', 'Trayecto 3, semetre 2'),
 ('4-1', 'Trayecto 4, semetre 1'),
