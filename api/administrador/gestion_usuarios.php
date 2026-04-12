@@ -5,7 +5,7 @@ include_once '../../auth/auth_helper.php';
 header("Content-Type: application/json");
 
 $method = $_SERVER['REQUEST_METHOD'];
-//$auth = new AuthMiddleware($pdo);
+$auth = new AuthMiddleware($pdo);
 
 switch ($method) {
     case 'GET':
@@ -14,7 +14,7 @@ switch ($method) {
             si existe un id_usuario, almacena esa informacion en una variable
             donde se va a filtrar pata validar que solo sea un entero.
             */
-            //$auth->protegerRuta('mostrar_usuarios');
+            $auth->protegerRuta('mostrar_usuarios');
 
             if (isset($_GET['id_usuario'])) {
                 $id = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
@@ -74,7 +74,7 @@ switch ($method) {
             peticion.
             */
 
-            //$auth->protegerRuta('crear_usuario');
+            $auth->protegerRuta('crear_usuario');
 
             $json = file_get_contents('php://input');
             $input = json_decode($json, true);
@@ -163,7 +163,7 @@ switch ($method) {
 
         $id_usuario = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
 
-        //$auth->protegerRuta('editar_usuario');
+        $auth->protegerRuta('editar_usuario');
 
         if (!$id_usuario) {
             http_response_code(400);

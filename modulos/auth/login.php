@@ -1,5 +1,6 @@
 <?php
 // login.php
+session_start();
 include_once '../../config/db.php';
 
 header("Content-Type: application/json");
@@ -71,5 +72,6 @@ try {
 } catch (PDOException $e) {
     error_log("Error en Login: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(["error" => "Error interno del servidor"]);
+    echo json_encode(["error" => "Error interno del servidor" . $e->getMessage()]);
 }
+?>

@@ -1,0 +1,146 @@
+/* public/css/style.css */
+
+:root {
+    --sidebar-width: 260px;
+    --bg-dark-sidebar: #111827;
+    --bg-active: #1f2937;
+    --text-muted: #9ca3af;
+}
+
+body {
+    background-color: #f3f4f6;
+    display: flex;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Sidebar Styling */
+#sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--bg-dark-sidebar);
+    color: white;
+    transition: all 0.3s;
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    padding: 20px;
+    font-weight: bold;
+    font-size: 1.2rem;
+    border-bottom: 1px solid #374151;
+    display: flex;
+    align-items: center;
+}
+
+.nav-link {
+    color: var(--text-muted) !important;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    transition: 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: white !important;
+    background-color: var(--bg-active);
+}
+
+.nav-link i {
+    margin-right: 12px;
+    font-size: 1.2rem;
+}
+
+/* Content Area */
+#content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    padding: 20px;
+    width: 100%;
+}
+
+.top-nav {
+    background: white;
+    padding: 15px 30px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#sidebar.active {
+    width: 80px; /* Ancho reducido cuando está colapsado */
+}
+
+#sidebar.active .logo-text,
+#sidebar.active .link-text {
+    display: none; /* Oculta el texto */
+}
+
+#sidebar.active .nav-link {
+    justify-content: center;
+    padding: 15px 0;
+}
+
+#sidebar.active .nav-link i {
+    margin-right: 0;
+    font-size: 1.5rem;
+}
+
+#sidebar.active .sidebar-header {
+    justify-content: center;
+    padding: 15px 0;
+}
+
+#sidebar.active #sidebarCollapse {
+    margin: 0 !important;
+}
+
+/* Ajuste del contenido principal cuando el sidebar está colapsado */
+#sidebar.active + #content {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+}
+
+/* Transición suave */
+#sidebar, #content {
+    transition: all 0.3s ease;
+}
+
+/* Estilos específicos para el Login */
+.login-container {
+    max-width: 1000px;
+    border-radius: 15px;
+    overflow: hidden;
+    min-height: 600px;
+}
+
+.login-banner {
+    background: linear-gradient(135deg, #111827 0%, #1f2937 100%) !important;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #0d6efd;
+}
+
+.input-group-text {
+    border-right: none;
+}
+
+.form-control {
+    border-left: none;
+}
+
+/* Mejora la responsividad en móviles */
+@media (max-width: 768px) {
+    .login-container {
+        box-shadow: none !important;
+        margin: 0 !important;
+        border-radius: 0;
+    }
+}
