@@ -7,17 +7,37 @@
     </div>
     
     <div class="mt-3 nav flex-column">
-        <a href="dashboard.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">
+        <a href="/unexca/public/dashboard.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">
             <i class="bi bi-house-door"></i> <span class="link-text">Home</span>
         </a>
-        <a href="estudiantes.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'estudiantes.php' ? 'active' : ''; ?>">
-            <i class="bi bi-people"></i> <span class="link-text">Estudiantes</span>
+
+        <a href="/unexca/public/estudiantes.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'estudiantes.php' ? 'active' : ''; ?>">
+            <i class="bi bi-person"></i> <span class="link-text">Estudiantes</span>
         </a>
         
         <?php if (isset($_SESSION['id_tipo']) && $_SESSION['id_tipo'] == 1): ?>
-        <a href="admin.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'admin.php' ? 'active' : ''; ?>">
-            <i class="bi bi-gear"></i> <span class="link-text">Administración</span>
-        </a>
+        <div>
+            <a href="#adminSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle shadow-none">
+                <i class="bi bi-shield-lock"></i> <span class="link-text">Administración</span>
+            </a>
+            <ul class="collapse list-unstyled mb-0 bg-dark" id="adminSubmenu">
+                <li>
+                    <a href="/unexca/modulos/users.php" class="nav-link ps-5 py-2">
+                        <i class="bi bi-people small"></i> <span class="link-text">Usuarios</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/unexca/modulos/roles.php" class="nav-link ps-5 py-2">
+                        <i class="bi bi-person-badge small"></i> <span class="link-text">Roles</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/unexca/modulos/permisos.php" class="nav-link ps-5 py-2">
+                        <i class="bi bi-key small"></i> <span class="link-text">Permisos</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
         <?php endif; ?>
 
         <div class="mt-auto border-top border-secondary">

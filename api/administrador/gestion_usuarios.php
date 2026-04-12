@@ -10,34 +10,29 @@ $auth = new AuthMiddleware($pdo);
 switch ($method) {
     case 'GET':
         try {
-            /*
-            si existe un id_usuario, almacena esa informacion en una variable
-            donde se va a filtrar pata validar que solo sea un entero.
-            */
             $auth->protegerRuta('mostrar_usuarios');
 
             if (isset($_GET['id_usuario'])) {
                 $id = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
-                /*
-                si el get envia un id no valido, mostrara un error en pantalla.
-                */
+
                 if (!$id) {
                     http_response_code(400);
                     echo json_encode(["error" => "ID no válido"]);
                     break;
                 }
-                /*
-                creamos un query para buscar y mostrar el usuario almacenado en base de datos mientras exista el id del usuario y mostrar el usuario seleccionado.
-                */
-                $stmt = $pdo->prepare("SELECT id_usuario, cedula, nombres, apellidos, correo_institucional, id_tipo,activo,ultimo_login, creado_en
-                                       FROM unexca_db.usuarios
-                                       WHERE id_usuario = :id");
 
+                // Query con INNER JOIN para un usuario específico
+                $sql = "SELECT u.id_usuario, u.cedula, u.nombres, u.apellidos, 
+                               u.correo_institucional, u.activo, u.id_tipo, 
+                               u.ultimo_login, u.creado_en, t.nombre_tipo 
+                        FROM unexca_db.usuarios u
+                        INNER JOIN unexca_db.tipos_usuario t ON u.id_tipo = t.id_tipo
+                        WHERE u.id_usuario = :id";
+
+                $stmt = $pdo->prepare($sql);
                 $stmt->execute(['id' => $id]);
                 $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
-                /*
-                si existe el usuario(seleccionado por el id), muestralo sino mostrar un mensaje que diga: "usuario no encontrado".
-                */
+
                 if ($usuario) {
                     echo json_encode($usuario);
                 } else {
@@ -45,19 +40,19 @@ switch ($method) {
                     echo json_encode(["error" => "Usuario no encontrado"]);
                 }
 
-                /*
-                sino ha sido seleccionado el id del usuario, muestrame todos los usuarios almacenados en la base de datos.
-                */
-
             } else {
-                $stmt = $pdo->query("SELECT id_usuario, cedula, nombres, apellidos, correo_institucional, id_tipo, activo, ultimo_login, creado_en FROM unexca_db.usuarios");
+                // Query con INNER JOIN para todos los usuarios
+                $sql = "SELECT u.id_usuario, u.cedula, u.nombres, u.apellidos, 
+                               u.correo_institucional, u.activo, u.id_tipo, 
+                               u.ultimo_login, u.creado_en, t.nombre_tipo 
+                        FROM unexca_db.usuarios u
+                        INNER JOIN unexca_db.tipos_usuario t ON u.id_tipo = t.id_tipo";
+
+                $stmt = $pdo->query($sql);
                 $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 echo json_encode($usuarios);
             }
         } catch (PDOException $e) {
-            /*
-            en caso de un error en la busqueda de los usuarios, captura el error y muestralo en pantalla.
-            */
             http_response_code(500);
             echo json_encode([
                 "error" => "Error de base de datos",
@@ -113,10 +108,10 @@ switch ($method) {
             }
 
             /*
-            * --validacion de cedula y correo que no esten registrados en la base de datos--
-            * prepraramos una consulta a la base de datos, seleccionamos y contamos los usuarios mientras la cedula o correo ingresada por el usuario
-            * no esten registradas en la base de datos
-            */
+             * --validacion de cedula y correo que no esten registrados en la base de datos--
+             * prepraramos una consulta a la base de datos, seleccionamos y contamos los usuarios mientras la cedula o correo ingresada por el usuario
+             * no esten registradas en la base de datos
+             */
             $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.usuarios WHERE cedula = :c OR correo_institucional = :e");
             $checkStmt->execute(['c' => $input['cedula'], 'e' => $input['correo_institucional']]);
             if ($checkStmt->fetchColumn() > 0) {
@@ -126,13 +121,13 @@ switch ($method) {
             }
 
             /*
-            * validacion de la contraseña hasheada
-            */
+             * validacion de la contraseña hasheada
+             */
             $password_hash = password_hash($input['password_hash'], PASSWORD_DEFAULT);
 
             /*
-            * insertamos lo datos enviados del usuario a la base de datos y enviamos un mensaje de exito si fue un 201.
-            */
+             * insertamos lo datos enviados del usuario a la base de datos y enviamos un mensaje de exito si fue un 201.
+             */
             $sql = "INSERT INTO unexca_db.usuarios (cedula, nombres, apellidos, correo_institucional, password_hash, id_tipo)
                 VALUES (:cedula, :nombres, :apellidos, :correo_institucional, :password_hash, :id_tipo)";
 

@@ -62,19 +62,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const btnLogout = document.getElementById('btnLogout');
-    if (btnLogout) {
-        btnLogout.addEventListener('click', async () => {
-            try {
-                const res = await fetch('/unexca/modulos/auth/logout.php');
 
-                if (res.ok) {
-                    window.location.href = 'index.php';
-                } else {
-                    console.error('No se pudo encontrar el archivo de logout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            Swal.fire({
+                title: '¿Cerrar sesión?',
+                text: "Está a punto de salir del sistema.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, salir',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const res = await fetch('/unexca/modulos/auth/logout.php');
+
+                        if (res.ok) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Sesión terminada',
+                                text: 'Has salido correctamente. ¡Hasta pronto!',
+                                timer: 1500,
+                                showConfirmButton: false,
+                                timerProgressBar: true
+                            }).then(() => {
+                                window.location.href = '/unexca/public/index.php';
+                            });
+                        } else {
+                            throw new Error('Error en la respuesta del servidor');
+                        }
+                    } catch (error) {
+                        console.error('Error al intentar cerrar sesión:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'No se pudo cerrar la sesión correctamente.'
+                        });
+                    }
                 }
-            } catch (error) {
-                console.error('Error al intentar cerrar sesión:', error);
-            }
+            });
         });
     }
 });

@@ -144,3 +144,39 @@ body {
         border-radius: 0;
     }
 }
+
+
+.text-danger {
+    color: #ef4444 !important; /* Un rojo más moderno */
+}
+
+/* Estilo para la flecha del dropdown */
+.dropdown-toggle::after {
+    display: inline-block;
+    margin-left: auto;
+    transition: transform 0.3s;
+}
+
+/* Rotar flecha cuando esté abierto */
+.dropdown-toggle[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+}
+
+/* Ocultar flecha y submenú cuando el sidebar esté colapsado (.active) */
+#sidebar.active .dropdown-toggle::after {
+    display: none;
+}
+
+#sidebar.active #adminSubmenu.show {
+    display: none !important; /* Evita que el submenú quede flotando si estaba abierto */
+}
+
+/* Estilo para los items del submenú */
+#adminSubmenu .nav-link {
+    font-size: 0.9rem;
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+#adminSubmenu .nav-link:hover {
+    background-color: var(--bg-active);
+}
