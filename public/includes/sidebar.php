@@ -22,6 +22,11 @@
             </a>
             <ul class="collapse list-unstyled mb-0 bg-dark" id="adminSubmenu">
                 <li>
+                    <a href="/unexca/modulos/persons_saime.php" class="nav-link ps-5 py-2">
+                        <i class="bi bi-person-lines-fill small"></i> <span class="link-text">Personas</span>
+                    </a>
+                </li>
+                <li>
                     <a href="/unexca/modulos/users.php" class="nav-link ps-5 py-2">
                         <i class="bi bi-people small"></i> <span class="link-text">Usuarios</span>
                     </a>

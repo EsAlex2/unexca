@@ -1,16 +1,12 @@
-<?php
-session_start();
-if (!isset($_SESSION['id_usuario']) || $_SESSION['id_tipo'] != 1) {
-    header("Location: ../index.php");
-    exit;
-}
+<?php 
+ include '../config/init.php';
 ?>
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <title>Gestión de Usuarios - UNEXCA</title>
+    <title><?php echo $page_title; ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
@@ -24,7 +20,7 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['id_tipo'] != 1) {
     <main id="content">
         <div class="top-nav">
             <h5 class="m-0"><i class="bi bi-people-fill me-2"></i> Gestión de Usuarios</h5>
-            <div class="text-muted small">Administrador: <?php echo $_SESSION['nombre_completo']; ?></div>
+            <div class="text-muted small"><?php echo $_SESSION['nombre_completo']; ?></div>
         </div>
 
         <div class="container-fluid pt-4">

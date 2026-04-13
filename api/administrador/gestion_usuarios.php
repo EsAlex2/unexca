@@ -10,31 +10,36 @@ $auth = new AuthMiddleware($pdo);
 switch ($method) {
     case 'GET':
         try {
-            $auth->protegerRuta('mostrar_usuarios');
+            $path = isset($_SERVER['PATH_INFO']) ? trim($_SERVER['PATH_INFO'], '/') : null;
 
-            if (isset($_GET['id_usuario'])) {
-                $id = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
+            if ($path) {
 
-                if (!$id) {
+                $cedula = filter_var($path, FILTER_UNSAFE_RAW);
+
+                if (!$cedula) {
                     http_response_code(400);
-                    echo json_encode(["error" => "ID no válido"]);
+                    echo json_encode(["error" => "Cédula no válida"]);
                     break;
                 }
 
                 // Query con INNER JOIN para un usuario específico
-                $sql = "SELECT u.id_usuario, u.cedula, u.nombres, u.apellidos, 
-                               u.correo_institucional, u.activo, u.id_tipo, 
-                               u.ultimo_login, u.creado_en, t.nombre_tipo 
+                $sql = "SELECT u.id_usuario, u.id_persona, u.cedula, u.correo_institucional,
+                               u.password_hash, u.id_tipo, u.id_estatus, e.nombre_estatus, t.nombre_tipo 
                         FROM unexca_db.usuarios u
                         INNER JOIN unexca_db.tipos_usuario t ON u.id_tipo = t.id_tipo
-                        WHERE u.id_usuario = :id";
+                        INNER JOIN unexca_db.estatus e ON u.id_estatus = e.id_estatus
+                        WHERE u.cedula = :cedula";
 
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute(['id' => $id]);
+                $stmt->execute(['cedula' => $cedula]);
                 $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($usuario) {
-                    echo json_encode($usuario);
+                    echo json_encode(["mensaje" => "Usuario encontrado", 
+                    "cedula" => $usuario['cedula'],
+                    "correo" => $usuario['correo_institucional'],
+                    "tipo" => $usuario['nombre_tipo'],
+                    "estatus" => $usuario['nombre_estatus']]);
                 } else {
                     http_response_code(404);
                     echo json_encode(["error" => "Usuario no encontrado"]);
@@ -42,11 +47,13 @@ switch ($method) {
 
             } else {
                 // Query con INNER JOIN para todos los usuarios
-                $sql = "SELECT u.id_usuario, u.cedula, u.nombres, u.apellidos, 
-                               u.correo_institucional, u.activo, u.id_tipo, 
-                               u.ultimo_login, u.creado_en, t.nombre_tipo 
+                $sql = "SELECT u.id_usuario, u.cedula, u.correo_institucional, 
+                                u.id_tipo, u.id_estatus, e.nombre_estatus, t.nombre_tipo,
+                                p.nombres, p.apellidos 
                         FROM unexca_db.usuarios u
-                        INNER JOIN unexca_db.tipos_usuario t ON u.id_tipo = t.id_tipo";
+                        INNER JOIN unexca_db.tipos_usuario t ON u.id_tipo = t.id_tipo
+                        INNER JOIN unexca_db.estatus e ON u.id_estatus = e.id_estatus
+                        INNER JOIN unexca_db.datos_personas p ON u.id_persona = p.id_persona";
 
                 $stmt = $pdo->query($sql);
                 $usuarios = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -63,180 +70,134 @@ switch ($method) {
 
     case 'POST':
         try {
-            /*
-            convierte la informacion ingrasada por el usuario en input, nos servira para recibir y procesar
-            los datos enviados en un formato JSON desde nuestra aplicacion(cliente API) a traves de una
-            peticion.
-            */
-
-            $auth->protegerRuta('crear_usuario');
-
             $json = file_get_contents('php://input');
             $input = json_decode($json, true);
 
-            /*
-            posteriormente, iteramos en los campos atraves de un array para verificar cual es el campo que esta vacio
-            y si no existe ese campo, enviamos un mensaje indicando que esta faltando ese campo especificamente.
-            */
-            $campos_requeridos = ['cedula', 'nombres', 'apellidos', 'correo_institucional', 'password_hash', 'id_tipo'];
-            foreach ($campos_requeridos as $campo) {
+            if (!isset($input['cedula']) || empty(trim($input['cedula']))) {
+                http_response_code(400);
+                echo json_encode(["error" => "La cédula es necesaria para verificar la identidad."]);
+                exit;
+            }
+
+            $cedula = trim($input['cedula']);
+
+            $stmtPersona = $pdo->prepare("SELECT id_persona, nombres, apellidos 
+            FROM unexca_db.datos_personas WHERE cedula_identidad = :c");
+            $stmtPersona->execute(['c' => $cedula]);
+            $persona = $stmtPersona->fetch(PDO::FETCH_ASSOC);
+
+            if (!$persona) {
+                http_response_code(404);
+                echo json_encode([
+                    "error" => "La persona no está registrada en el sistema.",
+                    "sugerencia" => "Debe registrar primero los datos básicos en el módulo de Personas/SAIME."
+                ]);
+                exit;
+            }
+
+            $id_persona = $persona['id_persona'];
+
+            $checkUser = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.usuarios WHERE id_persona = :idp");
+            $checkUser->execute(['idp' => $id_persona]);
+            if ($checkUser->fetchColumn() > 0) {
+                http_response_code(409);
+                echo json_encode(["error" => "Esta persona ya tiene una cuenta de usuario activa."]);
+                exit;
+            }
+
+            $campos_acceso = ['correo_institucional', 'password_hash', 'id_tipo'];
+            foreach ($campos_acceso as $campo) {
                 if (!isset($input[$campo]) || empty(trim((string) $input[$campo]))) {
                     http_response_code(400);
-                    echo json_encode(["error" => "El campo '$campo' es obligatorio."]);
+                    echo json_encode(["error" => "El campo '$campo' es necesario para el acceso."]);
                     exit;
                 }
             }
 
-            /*
-            luego, creamos una validacion para saber si existe el campo de correos y verificamos si el correo que el usuario
-            esta suministrandoen en el campo es valido.
-            */
-            $email = isset($input['correo_institucional']) ? trim($input['correo_institucional']) : '';
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                http_response_code(400);
-                echo json_encode(["error" => "El formato del correo electrónico no es válido."]);
-                exit;
-            }
-
-            /*
-            añadimos una validacion para que el campo de contraseñas posea minimo 8 caracteres
-            */
-            if (strlen($input['password_hash']) < 8) {
-                http_response_code(400);
-                echo json_encode(["error" => "La contraseña debe tener al menos 8 caracteres."]);
-                exit;
-            }
-
-            /*
-             * --validacion de cedula y correo que no esten registrados en la base de datos--
-             * prepraramos una consulta a la base de datos, seleccionamos y contamos los usuarios mientras la cedula o correo ingresada por el usuario
-             * no esten registradas en la base de datos
-             */
-            $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.usuarios WHERE cedula = :c OR correo_institucional = :e");
-            $checkStmt->execute(['c' => $input['cedula'], 'e' => $input['correo_institucional']]);
-            if ($checkStmt->fetchColumn() > 0) {
-                http_response_code(409);
-                echo json_encode(["error" => "La cedula o el correo ya están registrados."]);
-                exit;
-            }
-
-            /*
-             * validacion de la contraseña hasheada
-             */
             $password_hash = password_hash($input['password_hash'], PASSWORD_DEFAULT);
 
-            /*
-             * insertamos lo datos enviados del usuario a la base de datos y enviamos un mensaje de exito si fue un 201.
-             */
-            $sql = "INSERT INTO unexca_db.usuarios (cedula, nombres, apellidos, correo_institucional, password_hash, id_tipo)
-                VALUES (:cedula, :nombres, :apellidos, :correo_institucional, :password_hash, :id_tipo)";
+            $sql = "INSERT INTO unexca_db.usuarios (id_persona, cedula, correo_institucional, password_hash, id_tipo, id_estatus)
+                VALUES (:id_persona, :cedula, :correo, :pass, :tipo, :id_estatus)";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                'cedula' => trim($input['cedula']),
-                'nombres' => trim($input['nombres']),
-                'apellidos' => trim($input['apellidos']),
-                'correo_institucional' => trim($input['correo_institucional']),
-                'password_hash' => $password_hash,
-                'id_tipo' => $input['id_tipo']
+                'id_persona' => $id_persona,
+                'cedula' => $cedula,
+                'correo' => trim($input['correo_institucional']),
+                'pass' => $password_hash,
+                'tipo' => $input['id_tipo'],
+                'id_estatus' => 2 // Estatus inactivo por defecto, se puede cambiar luego
             ]);
 
             http_response_code(201);
-            echo json_encode(["message" => "Usuario creado exitosamente"]);
+            echo json_encode(["message" => "Usuario vinculado y creado exitosamente para " . $persona['nombres']]);
 
         } catch (PDOException $e) {
-            error_log($e->getMessage());
             http_response_code(500);
-            echo json_encode(["error" => "Error interno al crear el usuario"]);
+            echo json_encode(["error" => "Error interno", "detalle" => $e->getMessage()]);
         }
         break;
 
     case "PUT":
-
-
+        $path = isset($_SERVER['PATH_INFO']) ? trim($_SERVER['PATH_INFO'], '/') : null;
+        $cedula_url = filter_var($path, FILTER_UNSAFE_RAW);
         $input = json_decode(file_get_contents('php://input'), true);
 
-        $id_usuario = filter_input(INPUT_GET, 'id_usuario', FILTER_VALIDATE_INT);
-
-        $auth->protegerRuta('editar_usuario');
-
-        if (!$id_usuario) {
+        if (!$cedula_url) {
             http_response_code(400);
-            echo json_encode(["error" => "el id del usuario no es válido"]);
-            break;
-        }
-
-        $checkExist = $pdo->prepare("SELECT id_usuario FROM unexca_db.usuarios WHERE id_usuario = :id");
-        $checkExist->execute(['id' => $id_usuario]);
-        if (!$checkExist->fetch()) {
-            http_response_code(404);
-            echo json_encode(["error" => "Usuario no encontrado"]);
-            break;
-        }
-
-
-        $camposRequeridos = ['id_tipo', 'cedula', 'nombres', 'apellidos', 'correo_institucional'];
-        foreach ($camposRequeridos as $campo) {
-            if (!isset($input[$campo]) || strlen(trim((string) $input[$campo])) === 0) {
-                http_response_code(400);
-                echo json_encode(["error" => "El campo '$campo' es obligatorio."]);
-                exit;
-            }
-        }
-
-        $checkDup = $pdo->prepare("SELECT id_usuario FROM unexca_db.usuarios
-                                   WHERE (cedula = :c OR correo_institucional = :e)
-                                   AND id_usuario != :id");
-        $checkDup->execute([
-            'c' => $input['cedula'],
-            'e' => $input['correo_institucional'],
-            'id' => $id_usuario
-        ]);
-
-        if ($checkDup->fetch()) {
-            http_response_code(409);
-            echo json_encode(["error" => "La cédula o el correo ya están en uso por otro usuario"]);
-            break;
+            die(json_encode(["error" => "No hay cédula en la URL"]));
         }
 
         try {
-            $pass_to_update = !empty($input['password_hash'])
-                ? password_hash($input['password_hash'], PASSWORD_DEFAULT)
-                : null;
+            $stmt = $pdo->prepare("SELECT id_usuario FROM unexca_db.usuarios WHERE cedula = :cedula");
+            $stmt->execute(['cedula' => $cedula_url]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            $sql = "UPDATE unexca_db.usuarios
-                    SET cedula = :cedula,
-                        nombres = :nombres,
-                        apellidos = :apellidos,
-                        correo_institucional = :correo,
-                        id_tipo = :tipo" .
-                ($pass_to_update ? ", password_hash = :pass" : "") . "
-                    WHERE id_usuario = :id";
-
-            $params = [
-                'cedula' => trim($input['cedula']),
-                'nombres' => trim($input['nombres']),
-                'apellidos' => trim($input['apellidos']),
-                'correo' => trim($input['correo_institucional']),
-                'tipo' => $input['id_tipo'],
-                'id' => $id_usuario
-            ];
-
-            if ($pass_to_update) {
-                $params['pass'] = $pass_to_update;
+            if (!$user) {
+                http_response_code(404);
+                die(json_encode(["error" => "El usuario con cédula $cedula_url no existe en la base de datos"]));
             }
 
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+            $n_cedula = trim($input['cedula'] ?? '');
+            $n_correo = trim($input['correo_institucional'] ?? '');
+            $n_tipo = $input['id_tipo'] ?? null;
+            $n_estatus = $input['id_estatus'] ?? null;
+            $n_pass = !empty($input['password_hash']) ? password_hash($input['password_hash'], PASSWORD_DEFAULT) : null;
 
-            echo json_encode(["message" => "Usuario actualizado con éxito"]);
+            $sql = "UPDATE unexca_db.usuarios SET 
+                cedula = :c, 
+                correo_institucional = :m, 
+                id_tipo = :t, 
+                id_estatus = :e";
 
-        } catch (PDOException $e) {
+            $params = [
+                'c' => $n_cedula,
+                'm' => $n_correo,
+                't' => $n_tipo,
+                'e' => $n_estatus,
+                'id_usuario' => $user['id_usuario']
+            ];
+
+            if ($n_pass) {
+                $sql .= ", password_hash = :p";
+                $params['p'] = $n_pass;
+            }
+
+            $sql .= " WHERE id_usuario = :id_usuario";
+
+            $update = $pdo->prepare($sql);
+            $update->execute($params);
+
+            echo json_encode(["message" => "¡Usuario actualizado con éxito!"]);
+
+        } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(["error" => "Error en la base de datos", "detalle" => $e->getMessage()]);
+            echo json_encode([
+                "error" => "Error de base de datos",
+                "detalle" => $e->getMessage()
+            ]);
         }
         break;
-
     default:
         http_response_code(405);
         echo json_encode(["error" => "Método no permitido"]);

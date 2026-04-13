@@ -2,8 +2,9 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarRolesEnSelect();
     const tabla = $('#tablaUsuarios').DataTable({
         "ajax": {
-            "url": "../api/administrador/gestion_usuarios.php", // Agregamos ../ para salir de /modulos/
+            "url": "../api/administrador/gestion_usuarios.php",
             "dataSrc": "",
+            "cache": false,
             "error": function (xhr, error, code) {
                 console.log("Error detallado:", xhr.responseText);
             }
@@ -13,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
             {
                 "data": null,
                 "render": function (data) {
+                    // Ahora que agregamos el JOIN, estos campos estarán disponibles
                     return `${data.nombres} ${data.apellidos}`;
                 }
             },
@@ -21,11 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 "data": "nombre_tipo",
                 "render": function (nombre) {
                     let colorClass = "";
-
-                    // Asignamos una clase de Bootstrap según el nombre del rol
                     switch (nombre) {
                         case "Administrador":
-                            colorClass = "bg-dark text-white"; // Rojo
+                            colorClass = "bg-danger text-white"; // Rojo
                             break;
                         case "Administrativo":
                             colorClass = "bg-primary text-white"; // Azul
@@ -45,29 +45,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         default:
                             colorClass = "bg-light text-dark"; // Color por defecto
                     }
-
                     return `<span class="badge ${colorClass}">${nombre}</span>`;
                 }
             },
             {
-                "data": "activo",
-                "render": function (activo) {
-                    return activo
-                        ? '<span class="badge bg-success">Activo</span>'
-                        : '<span class="badge bg-secondary">Inactivo</span>';
+                "data": "nombre_estatus",
+                "render": function (estatus) {
+                    let badgeClass = estatus === "Activo" ? "bg-success" : "bg-secondary";
+                    return `<span class="badge ${badgeClass}">${estatus}</span>`;
                 }
             },
             {
                 "data": null,
                 "render": function (data) {
                     return `
-                        <button class="btn btn-sm btn-info text-white btn-editar" data-id="${data.id_usuario}">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger btn-eliminar" data-id="${data.id_usuario}">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    `;
+                <button class="btn btn-sm btn-info text-white btn-editar" data-id="${data.id_usuario}">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-sm btn-danger btn-eliminar" data-id="${data.id_usuario}">
+                    <i class="bi bi-trash"></i>
+                </button>`;
                 }
             }
         ],

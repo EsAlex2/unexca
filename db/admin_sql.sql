@@ -1,14 +1,14 @@
-CREATE TABLE unexca_db.tipos_usuario ( --terminado
+CREATE TABLE unexca_db.tipos_usuario (
     id_tipo SERIAL PRIMARY KEY,
     nombre_tipo VARCHAR(50) UNIQUE NOT NULL,
-	descripcion TEXT
+    descripcion TEXT
 );
 
 CREATE TABLE unexca_db.estatus (
-	id_estatus SERIAL PRIMARY KEY,
-	nombre_estatus VARCHAR (100) NOT NULL,
-	descripcion TEXT,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id_estatus SERIAL PRIMARY KEY,
+    nombre_estatus VARCHAR (100) NOT NULL,
+    descripcion TEXT,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE unexca_db.sedes_unexca (
@@ -18,52 +18,11 @@ CREATE TABLE unexca_db.sedes_unexca (
     direccion TEXT
 ); 
 
-CREATE TABLE unexca_db.usuarios (
-    id_usuario SERIAL PRIMARY KEY,
-    cedula VARCHAR(15) UNIQUE NOT NULL,
-    nombres VARCHAR(100) NOT NULL,
-    apellidos VARCHAR(100) NOT NULL,
-    correo_institucional VARCHAR(150) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    id_tipo INTEGER REFERENCES unexca_db.tipos_usuario(id_tipo),
-    activo BOOLEAN DEFAULT FALSE,
-    ultimo_login TIMESTAMP,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE unexca_db.pnf (
-	id_pnf SERIAL PRIMARY KEY,
-	id_sede INTEGER REFERENCES unexca_db.sedes_unexca(id_sede) ON DELETE CASCADE,
-	cod_pnf VARCHAR(20) NOT NULL,
-	nombre_pnf VARCHAR(100) NOT NULL,
-	descripcion TEXT,
-	duracion_pnf INTEGER NOT NULL,
-	unidad_total_creditos INTEGER NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE unexca_db.trayectos (
-	id_trayecto SERIAL PRIMARY KEY,
-	cod_trayecto VARCHAR(10) NOT NULL,
-	descripcion TEXT,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE unexca_db.datos_docentes (
-    id_docente SERIAL PRIMARY KEY,
-	id_tipo INTEGER REFERENCES unexca_db.tipos_usuario(id_tipo) ON DELETE CASCADE,
-	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE DEFAULT 2,
-	cedula_docente INT UNIQUE NOT NULL,
-    nombres VARCHAR(100) NOT NULL,
-	apellidos VARCHAR(100) NOT NULL,
-	genero VARCHAR(30) NOT NULL,
-	fecha_nacimiento DATE NOT NULL,
-	correo_personal VARCHAR(150) UNIQUE NOT NULL,
-	telefono_personal VARCHAR(20),
-	direccion_habitacion TEXT,
-	fecha_ingreso DATE NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actualizado_en TIMESTAMP
+    id_trayecto SERIAL PRIMARY KEY,
+    cod_trayecto VARCHAR(10) NOT NULL,
+    descripcion TEXT,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE unexca_db.periodo_academico (
@@ -75,7 +34,6 @@ CREATE TABLE unexca_db.periodo_academico (
     CONSTRAINT check_fechas CHECK (fecha_final > fecha_inicio)
 );
 
-
 CREATE TABLE unexca_db.secciones (
     id_seccion SERIAL PRIMARY KEY,
     cod_seccion VARCHAR(15) NOT NULL,
@@ -85,78 +43,177 @@ CREATE TABLE unexca_db.secciones (
     CONSTRAINT check_capacidad_max CHECK (capacidad_max >= 0 AND capacidad_max <= 40)
 );
 
-select * from unexca_db.horarios;
-
-CREATE TABLE unexca_db.horarios (
-	id_horario SERIAL PRIMARY KEY,
-	id_asignatura INTEGER REFERENCES unexca_db.asignatura(id_asignatura) ON DELETE CASCADE,
-	id_seccion INTEGER REFERENCES unexca_db.secciones(id_seccion) ON DELETE CASCADE,
-	id_docente INTEGER REFERENCES unexca_db.datos_docentes(id_docente) ON DELETE CASCADE,
-	id_aula INTEGER REFERENCES unexca_db.aulas(id_aula) ON DELETE CASCADE,
-	id_turno INTEGER REFERENCES unexca_db.turnos(id_turno) ON DELETE CASCADE,
-	id_trayecto INTEGER REFERENCES unexca_db.trayectos(id_trayecto) ON DELETE CASCADE,
-	cod_horario VARCHAR(20) NOT NULL,
-	hora_inicio TIME NOT NULL,
-	hora_fin TIME NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actualizado_en TIMESTAMP
-);
-
-
-CREATE TABLE unexca_db.asignatura (
-    id_asignatura SERIAL PRIMARY KEY,
-    id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
-	id_trayecto INTEGER REFERENCES unexca_db.trayectos(id_trayecto) ON DELETE CASCADE,
-    codigo VARCHAR(20) UNIQUE NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-    unidades_credito INTEGER NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actualizado_en TIMESTAMP
-);
-
 CREATE TABLE unexca_db.turnos (
-	id_turno SERIAL PRIMARY KEY,
-	turno VARCHAR(50) NOT NULL,
-	descripcion TEXT,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id_turno SERIAL PRIMARY KEY,
+    turno VARCHAR(50) NOT NULL,
+    descripcion TEXT,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE unexca_db.aulas (
-	id_aula SERIAL PRIMARY KEY,
-	piso VARCHAR(15) NOT NULL,
-	nro_aula VARCHAR(15) NOT NULL,
-	nombre_aula VARCHAR(20) NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id_aula SERIAL PRIMARY KEY,
+    piso VARCHAR(15) NOT NULL,
+    nro_aula VARCHAR(15) NOT NULL,
+    nombre_aula VARCHAR(20) NOT NULL,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE unexca_db.requisitos (
+    id_requisito SERIAL PRIMARY KEY,
+    nombre_requisito VARCHAR(100) NOT NULL,
+    categoria_estudiante VARCHAR(50),
+    descripcion TEXT,
+    es_obligatorio BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE unexca_db.modulos (
+    id_modulo SERIAL PRIMARY KEY,
+    nombre_modulo VARCHAR(50) UNIQUE NOT NULL, 
+    icono VARCHAR(50), 
+    orden INTEGER DEFAULT 0, 
+    activo BOOLEAN DEFAULT TRUE,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE unexca_db.categorias_conf (
+    id_categoria SERIAL PRIMARY KEY,
+    nombre_categoria VARCHAR(100) NOT NULL UNIQUE,
+    descripcion TEXT,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP
+);
+
+
+CREATE TABLE unexca_db.configuraciones (
+    id SERIAL PRIMARY KEY,
+    clave VARCHAR(100) NOT NULL UNIQUE,
+    valor TEXT,
+    descripcion TEXT,
+    id_categoria INTEGER REFERENCES unexca_db.categorias_conf(id_categoria) ON DELETE CASCADE,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP
+);
+
+CREATE TABLE unexca_db.permisos (
+    id_permiso SERIAL PRIMARY KEY,
+    nombre_permiso VARCHAR(100) UNIQUE NOT NULL,
+    descripcion TEXT,
+    id_modulos INTEGER REFERENCES unexca_db.modulos(id_modulo) ON DELETE CASCADE
+);
+
+CREATE TABLE unexca_db.pnf (
+    id_pnf SERIAL PRIMARY KEY,
+    id_sede INTEGER REFERENCES unexca_db.sedes_unexca(id_sede) ON DELETE CASCADE,
+    cod_pnf VARCHAR(20) NOT NULL,
+    nombre_pnf VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    duracion_pnf INTEGER NOT NULL,
+    unidad_total_creditos INTEGER NOT NULL,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE unexca_db.aranceles (
+    id_arancel SERIAL PRIMARY KEY,
+    id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
+    descripcion VARCHAR(100) NOT NULL,
+    monto DECIMAL(12,2) NOT NULL
+);
+
+CREATE TABLE unexca_db.usuarios (
+    id_usuario SERIAL PRIMARY KEY,
+    id_persona INTEGER UNIQUE REFERENCES unexca_db.datos_personas(id_persona) ON DELETE CASCADE,
+    cedula VARCHAR(15) UNIQUE NOT NULL, -- Se mantiene para login, pero debe coincidir con datos_personas
+    correo_institucional VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    id_tipo INTEGER REFERENCES unexca_db.tipos_usuario(id_tipo) ON DELETE CASCADE,
+    id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	ultimo_login TIMESTAMP
+);
+
+select * from unexca_db.datos_personas;
+
+CREATE TABLE unexca_db.datos_personas (
+    id_persona SERIAL PRIMARY KEY,
+    id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
+    cedula_identidad INT UNIQUE NOT NULL,
+    nombres VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    genero VARCHAR(30) NOT NULL,
+    fecha_nacimiento DATE NOT NULL,
+    correo_personal VARCHAR(150) UNIQUE NOT NULL,
+    telefono_personal VARCHAR (20),
+    direccion_habitacion TEXT,
+    fecha_ingreso DATE NOT NULL,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP
+);
+
+CREATE TABLE unexca_db.roles_permisos (
+    id_tipo_usuario INTEGER REFERENCES unexca_db.tipos_usuario(id_tipo) ON DELETE CASCADE,
+    id_permiso INTEGER REFERENCES unexca_db.permisos(id_permiso) ON DELETE CASCADE,
+    id_usuario INTEGER REFERENCES unexca_db.usuarios(id_usuario) ON DELETE CASCADE,
+    PRIMARY KEY (id_tipo_usuario, id_permiso, id_usuario)
+);
+
+CREATE TABLE unexca_db.datos_docentes (
+    id_docente SERIAL PRIMARY KEY,
+    id_persona INTEGER UNIQUE REFERENCES unexca_db.datos_personas(id_persona) ON DELETE CASCADE,
+    id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
+    id_sede INTEGER REFERENCES unexca_db.sedes_unexca(id_sede) ON DELETE CASCADE,
+    fecha_ingreso DATE NOT NULL,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP
 );
 
 CREATE TABLE unexca_db.datos_estudiantes (
     id_estudiante SERIAL PRIMARY KEY,
-	id_tipo INTEGER REFERENCES unexca_db.tipos_usuario(id_tipo) ON DELETE CASCADE,
-	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
-	cedula_identidad INT UNIQUE NOT NULL,
-	nombres_estudiante VARCHAR(100) NOT NULL,
-	apellidos_estudiante VARCHAR(100) NOT NULL,
-	genero VARCHAR(30) NOT NULL,
-	fecha_nacimiento DATE NOT NULL,
-	correo_personal VARCHAR(150) UNIQUE NOT NULL,
-	telefono_personal VARCHAR (20),
-	direccion_habitacion TEXT,
+    id_persona INTEGER UNIQUE REFERENCES unexca_db.datos_personas(id_persona) ON DELETE CASCADE,
+    id_trayecto INTEGER REFERENCES unexca_db.trayectos(id_trayecto) ON DELETE CASCADE,
+    id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
+    id_sede INTEGER REFERENCES unexca_db.sedes_unexca(id_sede) ON DELETE CASCADE,
     fecha_ingreso DATE NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actualizado_en TIMESTAMP
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP
 );
 
 CREATE TABLE unexca_db.expediente_estudiante (
-	id_expediente SERIAL PRIMARY KEY,
-	id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
-	cod_expediente VARCHAR(50) UNIQUE NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id_expediente SERIAL PRIMARY KEY,
+    id_persona INTEGER REFERENCES unexca_db.datos_personas(id_persona) ON DELETE CASCADE,
+    cod_expediente VARCHAR(50) UNIQUE NOT NULL,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE unexca_db.asignatura (
+    id_asignatura SERIAL PRIMARY KEY,
+    id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
+    id_trayecto INTEGER REFERENCES unexca_db.trayectos(id_trayecto) ON DELETE CASCADE,
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    nombre VARCHAR(100) NOT NULL,
+    unidades_credito INTEGER NOT NULL,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP
+);
+
+CREATE TABLE unexca_db.horarios (
+    id_horario SERIAL PRIMARY KEY,
+    id_asignatura INTEGER REFERENCES unexca_db.asignatura(id_asignatura) ON DELETE CASCADE,
+    id_seccion INTEGER REFERENCES unexca_db.secciones(id_seccion) ON DELETE CASCADE,
+    id_docente INTEGER REFERENCES unexca_db.datos_docentes(id_docente) ON DELETE CASCADE,
+    id_aula INTEGER REFERENCES unexca_db.aulas(id_aula) ON DELETE CASCADE,
+    id_turno INTEGER REFERENCES unexca_db.turnos(id_turno) ON DELETE CASCADE,
+    id_trayecto INTEGER REFERENCES unexca_db.trayectos(id_trayecto) ON DELETE CASCADE,
+    cod_horario VARCHAR(20) NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Corregido: Referencias ajustadas a nombres de tablas reales
 CREATE TABLE unexca_db.inscripcion_nue_ingreso (
     id_inscripcion SERIAL PRIMARY KEY,
-    id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
-    id_periodo INTEGER REFERENCES unexca_db.periodos_academicos(id) ON DELETE CASCADE,
+    id_estudiante INTEGER REFERENCES unexca_db.datos_personas(id_persona) ON DELETE CASCADE,
+    id_periodo INTEGER REFERENCES unexca_db.periodo_academico(id_periodo) ON DELETE CASCADE,
     id_seccion INTEGER REFERENCES unexca_db.secciones(id_seccion) ON DELETE CASCADE,
     id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
     id_sede INTEGER REFERENCES unexca_db.sedes_unexca(id_sede) ON DELETE CASCADE,
@@ -177,19 +234,12 @@ CREATE TABLE unexca_db.inscripciones (
     CONSTRAINT check_rango_notas CHECK (nota_final >= 0 AND nota_final <= 20)
 );
 
-CREATE TABLE unexca_db.aranceles (
-    id_arancel SERIAL PRIMARY KEY,
-    id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
-    descripcion VARCHAR(100) NOT NULL,
-    monto DECIMAL(12,2) NOT NULL
-);
-
 CREATE TABLE unexca_db.pagos (
     id_pago SERIAL PRIMARY KEY,
     id_arancel INTEGER REFERENCES unexca_db.aranceles(id_arancel) ON DELETE CASCADE,
-	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
-	id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
-	nombre_banco VARCHAR(50) NOT NULL,
+    id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE,
+    id_persona INTEGER REFERENCES unexca_db.datos_personas(id_persona) ON DELETE CASCADE,
+    nombre_banco VARCHAR(50) NOT NULL,
     referencia_bancaria varchar(100) UNIQUE NOT NULL,
     fecha_pago DATE NOT NULL
 );
@@ -198,82 +248,23 @@ CREATE TABLE unexca_db.estudiante_requisitos (
     id SERIAL PRIMARY KEY,
     id_estudiante INTEGER REFERENCES unexca_db.datos_estudiantes(id_estudiante) ON DELETE CASCADE,
     id_requisito INTEGER REFERENCES unexca_db.requisitos(id_requisito) ON DELETE CASCADE,
-	id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE, 
+    id_estatus INTEGER REFERENCES unexca_db.estatus(id_estatus) ON DELETE CASCADE, 
     url_archivo TEXT,
     fecha_entrega TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    observaciones TEXT, -- Ej: "La foto está borrosa"
+    observaciones TEXT,
     actualizado_en TIMESTAMP
 );
-
-CREATE TABLE unexca_db.requisitos (
-    id_requisito SERIAL PRIMARY KEY,
-    nombre_requisito VARCHAR(100) NOT NULL,
-	categoria_estudiante VARCHAR(50),
-    descripcion TEXT,
-    es_obligatorio BOOLEAN DEFAULT TRUE
-);
-
-CREATE TABLE unexca_db.periodos_academicos (
-	id SERIAL PRIMARY KEY,
-	periodo_academico VARCHAR(15) NOT NULL,
-	ano_en_curso VARCHAR(15) NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actulizado_en TIMESTAMP
-);
-
-CREATE TABLE unexca_db.permisos (
-    id_permiso SERIAL PRIMARY KEY,
-    nombre_permiso VARCHAR(100) UNIQUE NOT NULL,
-    descripcion TEXT,
-    id_modulos INTEGER REFERENCES unexca_db.modulos(id_modulo) ON DELETE CASCADE
-);
-
-CREATE TABLE unexca_db.modulos (
-    id_modulo SERIAL PRIMARY KEY,
-    nombre_modulo VARCHAR(50) UNIQUE NOT NULL, 
-    icono VARCHAR(50), 
-    orden INTEGER DEFAULT 0, 
-    activo BOOLEAN DEFAULT TRUE,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE unexca_db.roles_permisos (
-    id_tipo_usuario INTEGER REFERENCES unexca_db.tipos_usuario(id_tipo) ON DELETE CASCADE,
-    id_permiso INTEGER REFERENCES unexca_db.permisos(id_permiso) ON DELETE CASCADE,
-	id_usuario INTEGER REFERENCES unexca_db.usuarios(id_usuario) ON DELETE CASCADE,
-    PRIMARY KEY (id_tipo_usuario, id_permiso, id_usuario)
-);
-
-CREATE TABLE unexca_db.configuraciones (
-    id SERIAL PRIMARY KEY,
-    clave VARCHAR(100) NOT NULL UNIQUE,
-    valor TEXT,
-    descripcion TEXT,
-    id_categoria INTEGER REFERENCES unexca_db.categorias_conf(id_categoria) ON DELETE CASCADE,
-    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    actualizado_en TIMESTAMP
-);
-
-CREATE TABLE unexca_db.categorias_conf (
-	id_categoria SERIAL PRIMARY KEY,
-	nombre_categoria VARCHAR(100) NOT NULL UNIQUE,
-	descripcion TEXT,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actualizado_en TIMESTAMP
-);
-
 
 CREATE TABLE unexca_db.semestre_actual (
-	id_semestre_actual SERIAL PRIMARY KEY,
-	periodo_academico VARCHAR(15) NOT NULL,
-	anio_en_curso VARCHAR(15) NOT NULL,
-	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	actulizado_en TIMESTAMP
+    id_semestre_actual SERIAL PRIMARY KEY,
+    periodo_academico VARCHAR(15) NOT NULL,
+    anio_en_curso VARCHAR(15) NOT NULL,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actulizado_en TIMESTAMP
 );
 
-select cedula_identidad, nombres_estudiante, apellidos_estudiante, direccion_habitacion 
-from unexca_db.datos_estudiantes 
-where nombres_estudiante = 'Carlos';
+
+select * from unexca_db.usuarios;
 
 SELECT * FROM unexca_db.secciones order by id_seccion asc;
 select * from unexca_db.horarios;
