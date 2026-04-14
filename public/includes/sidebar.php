@@ -10,13 +10,25 @@
         <a href="/unexca/public/dashboard.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">
             <i class="bi bi-house-door"></i> <span class="link-text">Home</span>
         </a>
-
-        <a href="/unexca/public/estudiantes.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'estudiantes.php' ? 'active' : ''; ?>">
-            <i class="bi bi-person"></i> <span class="link-text">Estudiantes</span>
-        </a>
         
         <?php if (isset($_SESSION['id_tipo']) && $_SESSION['id_tipo'] == 1): ?>
         <div>
+            <a href="#gestionUsuarios" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle shadow-none">
+                <i class="bi bi-people"></i> <span class="link-text">Gestion de Usuarios</span>
+            </a>
+            <ul class="collapse list-unstyled mb-0 bg-dark" id="gestionUsuarios">
+                <li>
+                    <a href="/unexca/modulos/users.php" class="nav-link ps-5 py-2">
+                        <i class="bi bi-person-lines-fill"></i><span class="link-text">Lista de Usuarios</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/unexca/modulos/create_users.php" class="nav-link ps-5 py-2">
+                        <i class="bi bi-person-fill-add"></i><span class="link-text">Creacion de Usuarios</span>
+                    </a>
+                </li>
+            </ul>
+
             <a href="#adminSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle shadow-none">
                 <i class="bi bi-shield-lock"></i> <span class="link-text">Administración</span>
             </a>
@@ -27,18 +39,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="/unexca/modulos/users.php" class="nav-link ps-5 py-2">
-                        <i class="bi bi-people small"></i> <span class="link-text">Usuarios</span>
-                    </a>
-                </li>
-                <li>
                     <a href="/unexca/modulos/roles.php" class="nav-link ps-5 py-2">
                         <i class="bi bi-person-badge small"></i> <span class="link-text">Roles</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="/unexca/modulos/permisos.php" class="nav-link ps-5 py-2">
-                        <i class="bi bi-key small"></i> <span class="link-text">Permisos</span>
                     </a>
                 </li>
             </ul>

@@ -13,7 +13,6 @@ switch ($method) {
             $path = isset($_SERVER['PATH_INFO']) ? trim($_SERVER['PATH_INFO'], '/') : null;
 
             if ($path) {
-
                 $cedula = filter_var($path, FILTER_UNSAFE_RAW);
 
                 if (!$cedula) {
@@ -22,31 +21,55 @@ switch ($method) {
                     break;
                 }
 
-                // Query con INNER JOIN para un usuario específico
-                $sql = "SELECT u.id_usuario, u.id_persona, u.cedula, u.correo_institucional,
-                               u.password_hash, u.id_tipo, u.id_estatus, e.nombre_estatus, t.nombre_tipo 
+                // 1. Intentar buscar si la persona ya tiene un usuario creado
+                $sqlUsuario = "SELECT u.id_usuario, u.cedula, u.correo_institucional,
+                               u.id_tipo, u.id_estatus, e.nombre_estatus, t.nombre_tipo,
+                               p.nombres, p.apellidos 
                         FROM unexca_db.usuarios u
                         INNER JOIN unexca_db.tipos_usuario t ON u.id_tipo = t.id_tipo
                         INNER JOIN unexca_db.estatus e ON u.id_estatus = e.id_estatus
+                        INNER JOIN unexca_db.datos_personas p ON u.id_persona = p.id_persona
                         WHERE u.cedula = :cedula";
 
-                $stmt = $pdo->prepare($sql);
+                $stmt = $pdo->prepare($sqlUsuario);
                 $stmt->execute(['cedula' => $cedula]);
                 $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($usuario) {
-                    echo json_encode(["mensaje" => "Usuario encontrado", 
-                    "cedula" => $usuario['cedula'],
-                    "correo" => $usuario['correo_institucional'],
-                    "tipo" => $usuario['nombre_tipo'],
-                    "estatus" => $usuario['nombre_estatus']]);
+                    // Si existe el usuario, devolvemos un error 409 (Conflicto) para indicar que ya tiene cuenta
+                    http_response_code(409);
+                    echo json_encode([
+                        "error" => "Esta persona ya tiene una cuenta de usuario activa.",
+                        "detalles" => $usuario
+                    ]);
                 } else {
-                    http_response_code(404);
-                    echo json_encode(["error" => "Usuario no encontrado"]);
+                    // 2. Si no tiene usuario, buscamos sus datos reales en la tabla de personas
+                    $sqlPersona = "SELECT nombres, apellidos FROM unexca_db.datos_personas 
+                                   WHERE cedula_identidad = :cedula";
+
+                    $stmtP = $pdo->prepare($sqlPersona);
+                    $stmtP->execute(['cedula' => $cedula]);
+                    $persona = $stmtP->fetch(PDO::FETCH_ASSOC);
+
+                    if ($persona) {
+                        // Si existe en personas pero no en usuarios, devolvemos sus datos reales
+                        echo json_encode([
+                            "mensaje" => "Persona encontrada",
+                            "nombres" => $persona['nombres'],
+                            "apellidos" => $persona['apellidos']
+                        ]);
+                    } else {
+                        // Si no existe en ninguna de las dos tablas
+                        http_response_code(404);
+                        echo json_encode([
+                            "error" => "La persona no está registrada en el sistema.",
+                            "sugerencia" => "Debe registrar primero los datos básicos en el módulo de Personas/SAIME."
+                        ]);
+                    }
                 }
 
             } else {
-                // Query con INNER JOIN para todos los usuarios
+                // Listado general de usuarios (mantiene tu lógica actual)
                 $sql = "SELECT u.id_usuario, u.cedula, u.correo_institucional, 
                                 u.id_tipo, u.id_estatus, e.nombre_estatus, t.nombre_tipo,
                                 p.nombres, p.apellidos 

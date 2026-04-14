@@ -1,4 +1,3 @@
-// public/js/auth.js
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -17,6 +16,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    
 });
