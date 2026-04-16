@@ -41,3 +41,22 @@ document.addEventListener('DOMContentLoaded', () => {
         "language": { "url": "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json" }
     });
 });
+
+$(document).ready(function () {
+    
+    $('#formPersona').on('submit', function (e) {
+        e.preventDefault();
+
+        const datos = {
+            cedula_identidad: $('#identificacion').val(),
+            nombres: $('#nombres').val(),
+            apellidos: $('#apellidos').val(),
+            genero: $('#genero').val(),
+            fecha_nacimiento: $('#fecha_na').val(),
+            correo_personal: $('#correo').val(),
+            telefono_personal: $('#telefono').val(),
+            direccion_habitacion: $('#direccion').val(),
+            
+        }
+    });
+});

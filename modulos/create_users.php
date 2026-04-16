@@ -100,9 +100,6 @@ include '../config/init.php';
     <script src="/unexca/public/js/sidebar.js"></script>
     <script src="/unexca/public/js/auth.js"></script>
     <script src="/unexca/public/js/users.js"></script>
-    <script>
-
-    </script>
 </body>
 
 </html>

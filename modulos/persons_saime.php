@@ -1,5 +1,12 @@
 <?php
 include '../config/init.php';
+
+$genders = [
+    "1" => "Masculino",
+    "2" => "Femenino",
+    "3" => "Prefiero no Decirlo"
+];
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -64,7 +71,7 @@ include '../config/init.php';
                         <input type="hidden" id="id_persona" name="id_persona">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label">Número de Identificación</label>
+                                <label class="form-label">Cedula de Identidad</label>
                                 <input type="text" class="form-control" id="identificacion" name="identificacion"
                                     required>
                             </div>
@@ -77,6 +84,19 @@ include '../config/init.php';
                                 <input type="text" class="form-control" id="apellidos" name="apellidos" required>
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Género</label>
+                                <select class="form-select" id="genero" name="genero">
+                                    <option value="" disabled selected>Seleccione el Genero</option>
+                                    <?php foreach ($genders as $id => $name): ?>
+                                        <option value="<?php echo $id; ?>"><?php echo $name; ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fecha de Nacimiento</label>
+                                <input type="date" class="form-control" id="fecha_na" name="fecha_na" required>
+                            </div>
+                            <div class="col-md-6">
                                 <label class="form-label">Correo Electrónico</label>
                                 <input type="email" class="form-control" id="correo" name="correo" required>
                             </div>
@@ -84,14 +104,10 @@ include '../config/init.php';
                                 <label class="form-label">Teléfono</label>
                                 <input type="tel" class="form-control" id="telefono" name="telefono">
                             </div>
+                            
                             <div class="col-md-6">
-                                <label class="form-label">Género</label>
-                                <select class="form-select" id="genero" name="genero">
-                                    <option value="">Seleccione...</option>
-                                    <option value="M">Masculino</option>
-                                    <option value="F">Femenino</option>
-                                    <option value="O">Otro</option>
-                                </select>
+                                <label class="form-label">Direccion</label>
+                                <textarea class="form-control" id="direccion" name="direccion" row="10"></textarea>
                             </div>
                         </div>
                     </div>

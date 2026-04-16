@@ -401,7 +401,7 @@ INSERT INTO unexca_db.estatus (nombre_estatus, descripcion) VALUES
 ('Entregado', 'El estudiante ha cumplido con la entrega de requisitos o documentos solicitados.'),
 ('Pendiente', 'La solicitud ha sido enviada y espera revisión por parte de control de estudios.'),
 ('En Revisión', 'El proceso está siendo validado por el personal administrativo.'),
-('Rechazado', 'La solicitud no cumple con los requisitos necesarios.');
+('Rechazado', 'La solicitud no cumple con los requisitos necesarios.'),
 
 -- Estados de Inscripciones y Trayectos
 ('Inscrito', 'El estudiante se encuentra actualmente inscrito en la sección.'),
