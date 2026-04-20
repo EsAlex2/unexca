@@ -66,7 +66,7 @@ switch ($method) {
 
             $campos_requeridos = [
                 'cedula_identidad',
-                'id_estatus',
+                //'id_estatus',
                 'nombres',
                 'apellidos',
                 'genero',
@@ -121,7 +121,7 @@ switch ($method) {
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 'cedula_identidad' => trim($input['cedula_identidad']),
-                'id_estatus' => $input['id_estatus'],
+                'id_estatus' => 2,
                 'nombres' => trim($input['nombres']),
                 'apellidos' => trim($input['apellidos']),
                 'genero' => trim($input['genero']),
@@ -133,7 +133,7 @@ switch ($method) {
             ]);
 
             http_response_code(201);
-            echo json_encode(["message" => "Usuario creado exitosamente"]);
+            echo json_encode(["message" => "Datos registrados exitosamente"]);
 
         } catch (PDOException $e) {
             error_log($e->getMessage());
@@ -168,7 +168,6 @@ switch ($method) {
 
         $camposRequeridos = [
             'cedula_identidad',
-            'id_estatus',
             'nombres',
             'apellidos',
             'fecha_nacimiento',
@@ -201,7 +200,7 @@ switch ($method) {
         }
 
         try {
-            
+
             $sql = "UPDATE unexca_db.datos_personas
                 SET cedula_identidad = :nueva_cedula,
                     id_estatus = :estatus, 
@@ -229,7 +228,9 @@ switch ($method) {
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
 
+            http_response_code(200);
             echo json_encode(["message" => "Datos del ciudadano actualizados con éxito"]);
+            exit;
 
         } catch (PDOException $e) {
             http_response_code(500);

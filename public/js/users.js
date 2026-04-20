@@ -199,7 +199,7 @@ $(document).ready(function () {
                     icon: 'success',
                     title: '¡Registrado!',
                     text: res.message,
-                    confirmButtonText: 'Ver Lista'
+                    confirmButtonText: 'Ver Usuarios'
                 }).then(() => {
                     window.location.href = 'users.php';
                 });
