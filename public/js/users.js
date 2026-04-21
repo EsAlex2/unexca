@@ -59,10 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 "data": null,
                 "render": function (data) {
                     return `
-                <button class="btn btn-sm btn-info text-white btn-editar" data-id="${data.id_usuario}">
-                    <i class="bi bi-pencil-square"></i>
+                <button class="btn btn-sm btn-secondary text-white btn-mostrar_info_usuarios" data-id="${data.id_usuario}">
+                    <i class="bi bi-eye-fill"></i>
                 </button>
-                <button class="btn btn-sm btn-danger btn-eliminar" data-id="${data.id_usuario}">
+                <button class="btn btn-sm btn-danger btn-editar_usuarios" data-id="${data.id_usuario}">
                     <i class="bi bi-trash"></i>
                 </button>`;
                 }
@@ -228,3 +228,13 @@ function togglePassword() {
         icon.classList.replace('bi-eye-slash', 'bi-eye');
     }
 }
+
+
+$(document).on("click", ".btn-editar_usuarios", function () {
+    const cedula = $(this).data("id");
+
+    $.get(`../api/administrador/gestion_usuarios.php/${cedula}`, function (data) {
+        
+        $("modalEditarUsuario").modal("show");
+    });
+});

@@ -43,15 +43,15 @@ document.addEventListener("DOMContentLoaded", () => {
             : "bi-person-check-fill text-success";
 
           return `
-    <div class="d-flex gap-1">
-        <button class="btn btn-sm btn-secondary text-white btn-mostrar_datos" data-id="${d.cedula_identidad}" title="Ver detalles">
-            <i class="bi bi-eye-fill"></i>
-        </button>
+            <div class="d-flex gap-1">
+                <button class="btn btn-sm btn-secondary text-white btn-mostrar_datos" data-id="${d.cedula_identidad}" title="Ver detalles">
+                    <i class="bi bi-eye-fill"></i>
+                </button>
 
-        <button class="btn btn-sm btn-info text-white btn-editar" data-id="${d.cedula_identidad}" title="Editar Datos">
-        <i class="bi bi-pencil-square text-white"></i>
-        </button>
-    </div>`;
+                <button class="btn btn-sm btn-info text-white btn-editar" data-id="${d.cedula_identidad}" title="Editar Datos">
+                <i class="bi bi-pencil-square text-white"></i>
+                </button>
+            </div>`;
         },
       },
     ],
@@ -161,7 +161,6 @@ $(document).ready(function () {
   });
 });
 
-// 1. Cargar datos en el modal al hacer clic en Editar
 $(document).on("click", ".btn-editar", function () {
   const cedula = $(this).data("id");
   $.get(`../api/administrador/datos_saime.php/${cedula}`, function (data) {
@@ -174,8 +173,6 @@ $(document).on("click", ".btn-editar", function () {
     $("#edit_fecha_na").val(data.fecha_nacimiento);
     $("#edit_direccion").val(data.direccion_habitacion);
 
-    // CONFIGURACIÓN DEL TOGGLE
-    // Si el id_estatus es 1, el switch se marca (checked)
     const esActivo = data.id_estatus == 1;
     $("#edit_estatus_toggle").prop("checked", esActivo);
     actualizarLabelEstatus(esActivo);
@@ -188,12 +185,12 @@ function actualizarLabelEstatus(esActivo) {
   const label = $("#label_estatus");
   if (esActivo) {
     label
-      .text("Usuario Activo")
+      .text("Activo")
       .addClass("text-success")
       .removeClass("text-secondary");
   } else {
     label
-      .text("Usuario Inactivo")
+      .text("Inactivo")
       .addClass("text-secondary")
       .removeClass("text-success");
   }
