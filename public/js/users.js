@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 "data": null,
                 "render": function (data) {
                     return `
-                <button class="btn btn-sm btn-secondary text-white btn-mostrar_info_usuarios" data-id="${data.id_usuario}">
+                <button class="btn btn-sm btn-secondary text-white btn-activar-users" data-id="${data.id_usuario}">
                     <i class="bi bi-eye-fill"></i>
                 </button>
                 <button class="btn btn-sm btn-danger btn-editar_usuarios" data-id="${data.id_usuario}">
