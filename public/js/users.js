@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-
-    //funcion para cargar los roles en el datatable y la vista de creacion de usuarios
+  //funcion para cargar los roles en el datatable y la vista de creacion de usuarios
   cargarRolesEnSelect();
   const tabla = $("#tablaUsuarios").DataTable({
     ajax: {
@@ -52,16 +51,16 @@ document.addEventListener("DOMContentLoaded", () => {
           const isActive = data.nombre_estatus === "Activo" ? "checked" : "";
 
           return `
-      <div class="form-check form-switch">
-          <input class="form-check-input switch-estatus" type="checkbox" role="switch" 
-              id="switch_${data.id_usuario}" 
-              data-id="${data.id_usuario}" 
-              data-cedula="${data.cedula}"
-              ${isActive}>
-          <label class="form-check-label fw-bold" for="switch_${data.id_usuario}">
-              ${data.nombre_estatus}
-          </label>
-      </div>`;
+            <div class="form-check form-switch">
+                <input class="form-check-input switch-estatus" type="checkbox" role="switch" 
+                    id="switch_${data.id_usuario}" 
+                    data-id="${data.id_usuario}" 
+                    data-cedula="${data.cedula}"
+                    ${isActive}>
+                <label class="form-check-label fw-bold" for="switch_${data.id_usuario}">
+                    ${data.nombre_estatus}
+               </label>
+            </div>`;
         },
       },
     ],
@@ -69,7 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
       url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
     },
   });
-
 
   /*
   creacion de funcion para la carga de roles (method: GET)
@@ -82,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch("../api/administrador/gestion_roles.php");
       const roles = await response.json();
       select.innerHTML =
-        '<option value="" selected disabled>Seleccione un rol...</option>';  //CARGA DE ROLES EN SELECT
+        '<option value="" selected disabled>Seleccione un rol...</option>'; //CARGA DE ROLES EN SELECT
 
       roles.forEach((rol) => {
         const option = document.createElement("option");
@@ -108,7 +106,7 @@ $(document).ready(function () {
   async function cargarRoles() {
     const select = $("#id_tipo_select");
     try {
-      const response = await fetch("../api/administrador/gestion_roles.php"); 
+      const response = await fetch("../api/administrador/gestion_roles.php");
       const roles = await response.json();
 
       select
@@ -244,7 +242,6 @@ function togglePassword() {
   }
 }
 
-
 /*
 acivar / desactivar usuarios
 */
@@ -282,7 +279,7 @@ $(document).on("change", ".switch-estatus", function () {
     },
     error: function (xhr) {
       checkbox.prop("disabled", false);
-      checkbox.prop("checked", !checkbox.is(":checked")); 
+      checkbox.prop("checked", !checkbox.is(":checked"));
       console.error(xhr.responseText);
       Swal.fire("Error", "No se pudo cambiar el estatus", "error");
     },

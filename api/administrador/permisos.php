@@ -8,19 +8,18 @@ include_once '../../config/db.php';
 header("Content-Type: application/json");
 $method = $_SERVER['REQUEST_METHOD'];
 
+
 switch ($method) {
     case 'GET':
         try {
-            // Si se pide un ID específico
             if (isset($_GET['id_permiso'])) {
                 $id = filter_input(INPUT_GET, 'id_permiso', FILTER_VALIDATE_INT);
+
                 $stmt = $pdo->prepare("SELECT * FROM unexca_db.permisos WHERE id_permiso = :id");
                 $stmt->execute(['id' => $id]);
                 $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
                 echo json_encode($resultado ?: ["error" => "Permiso no encontrado"]);
-            }
-            // Si se piden los permisos de un ROL específico
-            else if (isset($_GET['id_tipo'])) {
+            } else if (isset($_GET['id_tipo'])) {
                 $id_tipo = filter_input(INPUT_GET, 'id_tipo', FILTER_VALIDATE_INT);
                 $sql = "SELECT p.* FROM unexca_db.permisos p
                         INNER JOIN unexca_db.roles_permisos rp ON p.id_permiso = rp.id_permiso
@@ -28,10 +27,12 @@ switch ($method) {
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute(['id_tipo' => $id_tipo]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-            }
-            // Listado general
-            else {
-                $stmt = $pdo->query("SELECT * FROM unexca_db.permisos ORDER BY id_permiso ASC");
+            } else {
+                $sql = "SELECT p.*, m.nombre_modulo 
+            FROM unexca_db.permisos p
+            LEFT JOIN unexca_db.modulos m ON p.id_modulos = m.id_modulo
+            ORDER BY p.id_permiso ASC";
+                $stmt = $pdo->query($sql);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             }
         } catch (PDOException $e) {
@@ -45,14 +46,11 @@ switch ($method) {
             $json = file_get_contents('php://input');
             $input = json_decode($json, true);
 
-            // Variables para la creación de un nuevo permiso
             $nombrePermiso = isset($input['nombre_permiso']) ? trim($input['nombre_permiso']) : null;
             $descripcion = trim($input['descripcion'] ?? '');
             $idModulo = $input['id_modulos'] ?? null;
 
-            // ACCIÓN 1: Crear nuevo permiso individual
             if ($nombrePermiso && $idModulo) {
-                // 1. Verificar si el permiso ya existe (ignorando mayúsculas/minúsculas)
                 $checkP = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.permisos WHERE LOWER(nombre_permiso) = LOWER(:nom)");
                 $checkP->execute(['nom' => $nombrePermiso]);
 
@@ -62,7 +60,6 @@ switch ($method) {
                     exit;
                 }
 
-                // 2. Verificar si el módulo existe en unexca_db.modulos
                 $checkM = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.modulos WHERE id_modulo = :mod");
                 $checkM->execute(['mod' => $idModulo]);
 
@@ -72,11 +69,11 @@ switch ($method) {
                     exit;
                 }
 
-                // 3. Insertar el nuevo permiso 
-                $sql = "INSERT INTO unexca_db.permisos (nombre_permiso, descripcion, id_modulos) 
-                        VALUES (:nom, :des, :mod)";
+                $sql = "INSERT INTO unexca_db.permisos (id_estatus, nombre_permiso, descripcion, id_modulos) 
+                        VALUES (:estatus, :nom, :des, :mod)";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
+                    'estatus' => 1,
                     'nom' => $nombrePermiso,
                     'des' => $descripcion,
                     'mod' => $idModulo
@@ -87,16 +84,12 @@ switch ($method) {
                     "message" => "Permiso creado con éxito",
                     "id_permiso" => $pdo->lastInsertId()
                 ]);
-            }
-
-            // ACCIÓN 2: Asignar múltiples permisos a un Rol (Procesamiento por lote)
-            else if (isset($input['id_tipo_usuario'], $input['id_permiso'], $input['id_usuario']) && is_array($input['id_permiso'])) {
+            } else if (isset($input['id_tipo_usuario'], $input['id_permiso'], $input['id_usuario']) && is_array($input['id_permiso'])) {
 
                 $id_rol = $input['id_tipo_usuario'];
                 $permisosArray = $input['id_permiso'];
                 $id_usuario = $input['id_usuario'];
 
-                // 1. Verificar si el TIPO DE USUARIO (Rol) existe [cite: 11]
                 $checkRol = $pdo->prepare("SELECT COUNT(*) FROM unexca_db.tipos_usuario WHERE id_tipo = :r");
                 $checkRol->execute(['r' => $id_rol]);
 
@@ -126,7 +119,6 @@ switch ($method) {
                     $stmtAsignar = $pdo->prepare($sqlAsignar);
 
                     foreach ($permisosArray as $id_permiso) {
-                        // Opcional: Podrías verificar aquí si cada $id_permiso existe en la tabla permisos
                         $stmtAsignar->execute([
                             'rol' => $id_rol,
                             'perm' => $id_permiso,
@@ -212,11 +204,13 @@ switch ($method) {
          */
         try {
             $sql = "UPDATE unexca_db.permisos SET 
+            id_estatus = :st,
             nombre_permiso = :np,
             descripcion = :d,
             id_modulos = :id_m WHERE id_permiso = :id";
 
             $parametros = [
+                'st' => $input['id_estatus'],
                 'np' => trim($input['nombre_permiso']),
                 'd' => trim($input['descripcion']),
                 'id_m' => $input['id_modulos'],

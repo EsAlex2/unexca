@@ -22,6 +22,7 @@
                         <i class="bi bi-person-lines-fill"></i><span class="link-text">Lista de Usuarios</span>
                     </a>
                 </li>
+                
                 <li>
                     <a href="/unexca/modulos/create_users.php" class="nav-link ps-5 py-2">
                         <i class="bi bi-person-fill-add"></i><span class="link-text">Creacion de Usuarios</span>
@@ -41,6 +42,11 @@
                 <li>
                     <a href="/unexca/modulos/roles.php" class="nav-link ps-5 py-2">
                         <i class="bi bi-person-badge small"></i> <span class="link-text">Roles</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/unexca/modulos/permissions.php" class="nav-link ps-5 py-2">
+                        <i class="bi bi-person-fill-gear"></i> <span class="link-text">Permisos</span>
                     </a>
                 </li>
             </ul>

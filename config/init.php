@@ -20,6 +20,7 @@ define('MODULO_USUARIOS', 'modulos/users.php');
 define('DASHBOARD_PRINCIPAL', 'dashboard.php'); 
 define('LOGIN_PAGE', 'index.php');
 define('MODULO_PERSONAS', 'modulos/persons_saime.php');
+define('MODULO_PERMISOS', 'modulos/permissions.php');
 
 
 $pages = [
@@ -28,7 +29,8 @@ $pages = [
     MODULO_USUARIOS => 'Gestión de Usuarios',
     DASHBOARD_PRINCIPAL => 'Panel de Control - UNEXCA',
     LOGIN_PAGE => 'Inicio de Sesión - UNEXCA',
-    MODULO_PERSONAS => 'Gestión de Personas'
+    MODULO_PERSONAS => 'Gestión de Personas',
+    MODULO_PERMISOS => 'Geston de Permisos'
 ];
 
 $page_title = SITE_NAME;

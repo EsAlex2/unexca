@@ -5,7 +5,6 @@ include_once '../../auth/auth_helper.php';
 header("Content-Type: application/json");
 
 $method = $_SERVER['REQUEST_METHOD'];
-$auth = new AuthMiddleware($pdo);
 
 switch ($method) {
     case 'GET':
