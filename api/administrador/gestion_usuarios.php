@@ -21,7 +21,6 @@ switch ($method) {
                     break;
                 }
 
-                // 1. Intentar buscar si la persona ya tiene un usuario creado
                 $sqlUsuario = "SELECT u.id_usuario, u.cedula, u.correo_institucional,
                                u.id_tipo, u.id_estatus, e.nombre_estatus, t.nombre_tipo,
                                p.nombres, p.apellidos 
@@ -36,14 +35,12 @@ switch ($method) {
                 $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($usuario) {
-                    // Si existe el usuario, devolvemos un error 409 (Conflicto) para indicar que ya tiene cuenta
                     http_response_code(409);
                     echo json_encode([
                         "error" => "Esta persona ya tiene una cuenta de usuario activa.",
                         "detalles" => $usuario
                     ]);
                 } else {
-                    // 2. Si no tiene usuario, buscamos sus datos reales en la tabla de personas
                     $sqlPersona = "SELECT nombres, apellidos FROM unexca_db.datos_personas 
                                    WHERE cedula_identidad = :cedula";
 
@@ -52,14 +49,12 @@ switch ($method) {
                     $persona = $stmtP->fetch(PDO::FETCH_ASSOC);
 
                     if ($persona) {
-                        // Si existe en personas pero no en usuarios, devolvemos sus datos reales
                         echo json_encode([
                             "mensaje" => "Persona encontrada",
                             "nombres" => $persona['nombres'],
                             "apellidos" => $persona['apellidos']
                         ]);
                     } else {
-                        // Si no existe en ninguna de las dos tablas
                         http_response_code(404);
                         echo json_encode([
                             "error" => "La persona no está registrada en el sistema.",
@@ -69,7 +64,6 @@ switch ($method) {
                 }
 
             } else {
-                // Listado general de usuarios (mantiene tu lógica actual)
                 $sql = "SELECT u.id_usuario, u.cedula, u.correo_institucional, 
                                 u.id_tipo, u.id_estatus, e.nombre_estatus, t.nombre_tipo,
                                 p.nombres, p.apellidos 
@@ -172,38 +166,40 @@ switch ($method) {
         }
 
         try {
-            $stmt = $pdo->prepare("SELECT id_usuario FROM unexca_db.usuarios WHERE cedula = :cedula");
+            // 1. Obtener datos actuales del usuario
+            $stmt = $pdo->prepare("SELECT * FROM unexca_db.usuarios WHERE cedula = :cedula");
             $stmt->execute(['cedula' => $cedula_url]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $userActual = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if (!$user) {
+            if (!$userActual) {
                 http_response_code(404);
-                die(json_encode(["error" => "El usuario con cédula $cedula_url no existe en la base de datos"]));
+                die(json_encode(["error" => "Usuario no encontrado"]));
             }
 
-            $n_cedula = trim($input['cedula'] ?? '');
-            $n_correo = trim($input['correo_institucional'] ?? '');
-            $n_tipo = $input['id_tipo'] ?? null;
-            $n_estatus = $input['id_estatus'] ?? null;
-            $n_pass = !empty($input['password_hash']) ? password_hash($input['password_hash'], PASSWORD_DEFAULT) : null;
+            // 2. Usar el valor del input o el valor actual de la DB (Coalesce lógica)
+            $n_cedula = $input['cedula'] ?? $userActual['cedula'];
+            $n_correo = $input['correo_institucional'] ?? $userActual['correo_institucional'];
+            $n_tipo = $input['id_tipo'] ?? $userActual['id_tipo'];
+            $n_estatus = $input['id_estatus'] ?? $userActual['id_estatus'];
 
             $sql = "UPDATE unexca_db.usuarios SET 
-                cedula = :c, 
-                correo_institucional = :m, 
-                id_tipo = :t, 
-                id_estatus = :e";
+            cedula = :c, 
+            correo_institucional = :m, 
+            id_tipo = :t, 
+            id_estatus = :e";
 
             $params = [
                 'c' => $n_cedula,
                 'm' => $n_correo,
                 't' => $n_tipo,
                 'e' => $n_estatus,
-                'id_usuario' => $user['id_usuario']
+                'id_usuario' => $userActual['id_usuario']
             ];
 
-            if ($n_pass) {
+            // Manejo de contraseña solo si viene en el input
+            if (!empty($input['password_hash'])) {
                 $sql .= ", password_hash = :p";
-                $params['p'] = $n_pass;
+                $params['p'] = password_hash($input['password_hash'], PASSWORD_DEFAULT);
             }
 
             $sql .= " WHERE id_usuario = :id_usuario";
@@ -211,14 +207,11 @@ switch ($method) {
             $update = $pdo->prepare($sql);
             $update->execute($params);
 
-            echo json_encode(["message" => "¡Usuario actualizado con éxito!"]);
+            echo json_encode(["message" => "¡Estatus/Usuario actualizado con éxito!"]);
 
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode([
-                "error" => "Error de base de datos",
-                "detalle" => $e->getMessage()
-            ]);
+            echo json_encode(["error" => $e->getMessage()]);
         }
         break;
     default:
