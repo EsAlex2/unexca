@@ -131,7 +131,7 @@ switch ($method) {
 
                 } catch (Exception $e) {
                     $pdo->rollBack();
-                    throw $e; // Re-lanzar para que lo capture el catch principal
+                    throw $e;
                 }
             } else {
                 http_response_code(400);
@@ -145,88 +145,53 @@ switch ($method) {
         break;
 
     case 'PUT':
-        /*
-         *creamos validaciones para mantener la seguridad e integridad de los datos ingresados por los usuarios
-         */
         $input = json_decode(file_get_contents('php://input'), true);
         $id_permiso = filter_input(INPUT_GET, 'id_permiso', FILTER_VALIDATE_INT);
-        /*
-        verificamos que el permiso sea valido
-        */
+
         if (!$id_permiso) {
             http_response_code(400);
             echo json_encode(["error" => "El id del permiso no es válido"]);
             break;
         }
-        /*
-        validamos que el permiso exista, prepraramos un query con pdo y arrojamos un mensaje de permiso no encontrado si no se encuantra el permiso
-        */
-        $permisoExistente = $pdo->prepare("SELECT id_permiso FROM unexca_db.permisos WHERE id_permiso = :id");
-        $permisoExistente->execute(['id' => $id_permiso]);
-        if (!$permisoExistente->fetch()) {
+
+        // 1. Obtener los datos actuales del permiso de la base de datos
+        $stmt = $pdo->prepare("SELECT * FROM unexca_db.permisos WHERE id_permiso = :id");
+        $stmt->execute(['id' => $id_permiso]);
+        $permisoActual = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$permisoActual) {
             http_response_code(404);
             echo json_encode(["error" => "Permiso no encontrado"]);
             break;
         }
-        /*
-        validamos que los campos no esten vacios y sean obligatorios para actualizar
-        */
-        $camposRequeridos = [
-            'nombre_permiso',
-            'descripcion',
-            'id_modulos'
-        ];
-        foreach ($camposRequeridos as $requerido) {
-            if (!isset($input[$requerido]) || strlen(trim((string) $input[$requerido])) === 0) {
-                http_response_code(400);
-                echo json_encode(["error" => "El campo '$requerido' es obligatorio."]);
-                exit;
-            }
-        }
-        /*
-        chequeamos que no existan valores duplicados en los permisos registrados previamente
-        */
-        $valoresDuplicados = $pdo->prepare("SELECT id_permiso FROM unexca_db.permisos WHERE (nombre_permiso = :np AND id_permiso != :id)");
-        $valoresDuplicados->execute([
-            'np' => $input['nombre_permiso'],
-            'id' => $id_permiso
-        ]);
 
-        if ($valoresDuplicados->fetch()) {
-            http_response_code(409);
-            echo json_encode([
-                "error" => "Permiso registrado previamente"
-            ]);
-            exit;
-        }
-        /*
-         *realizamos captura de informacion, si cumple con los parametros hacemos la actualizacion de los datos 
-         */
+        // 2. Fusionar datos: Si el campo no viene en el JSON ($input), usamos el que ya existe en la DB ($permisoActual)
+        $estatus = $input['id_estatus'] ?? $permisoActual['id_estatus'];
+        $nombre = $input['nombre_permiso'] ?? $permisoActual['nombre_permiso'];
+        $desc = $input['descripcion'] ?? $permisoActual['descripcion'];
+        $modulo = $input['id_modulos'] ?? $permisoActual['id_modulos'];
+
         try {
             $sql = "UPDATE unexca_db.permisos SET 
-            id_estatus = :st,
-            nombre_permiso = :np,
-            descripcion = :d,
-            id_modulos = :id_m WHERE id_permiso = :id";
-
-            $parametros = [
-                'st' => $input['id_estatus'],
-                'np' => trim($input['nombre_permiso']),
-                'd' => trim($input['descripcion']),
-                'id_m' => $input['id_modulos'],
-                'id' => $_GET['id_permiso']
-            ];
+                id_estatus = :st,
+                nombre_permiso = :np,
+                descripcion = :d,
+                id_modulos = :id_m 
+                WHERE id_permiso = :id";
 
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($parametros);
-
-            echo json_encode([
-                "message" => "El permiso ha sido actualizado exitosamente!"
+            $stmt->execute([
+                'st' => $estatus,
+                'np' => trim($nombre),
+                'd' => trim($desc),
+                'id_m' => $modulo,
+                'id' => $id_permiso
             ]);
 
+            echo json_encode(["message" => "¡Actualización exitosa!"]);
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(["error" => "Error en la base de datos"]);
+            echo json_encode(["error" => "Error en la base de datos: " . $e->getMessage()]);
         }
         break;
 
