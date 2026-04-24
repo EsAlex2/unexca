@@ -68,35 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
       url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
     },
   });
-
-  /*
-  creacion de funcion para la carga de roles (method: GET)
-  */
-  async function cargarRolesEnSelect() {
-    const select = document.getElementById("id_tipo_usuario");
-    if (!select) return;
-
-    try {
-      const response = await fetch("../api/administrador/gestion_roles.php");
-      const roles = await response.json();
-      select.innerHTML =
-        '<option value="" selected disabled>Seleccione un rol...</option>'; //CARGA DE ROLES EN SELECT
-
-      roles.forEach((rol) => {
-        const option = document.createElement("option");
-        option.value = rol.id_tipo;
-        option.textContent = rol.nombre_tipo;
-        select.appendChild(option);
-      });
-    } catch (error) {
-      console.error("Error cargando roles:", error);
-      select.innerHTML = '<option value="">Error al cargar roles</option>';
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    cargarRolesEnSelect();
-  });
 });
 
 $(document).ready(function () {

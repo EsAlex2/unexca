@@ -12,6 +12,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         try {
+
             if (isset($_GET['id_permiso'])) {
                 $id = filter_input(INPUT_GET, 'id_permiso', FILTER_VALIDATE_INT);
 
@@ -19,6 +20,11 @@ switch ($method) {
                 $stmt->execute(['id' => $id]);
                 $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
                 echo json_encode($resultado ?: ["error" => "Permiso no encontrado"]);
+
+            } else if (isset($_GET['listar_modulos'])) {
+                $sql = "SELECT id_modulo, nombre_modulo FROM unexca_db.modulos ORDER BY nombre_modulo ASC";
+                $stmt = $pdo->query($sql);
+                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             } else if (isset($_GET['id_tipo'])) {
                 $id_tipo = filter_input(INPUT_GET, 'id_tipo', FILTER_VALIDATE_INT);
                 $sql = "SELECT p.* FROM unexca_db.permisos p
@@ -27,11 +33,12 @@ switch ($method) {
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute(['id_tipo' => $id_tipo]);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+                
             } else {
                 $sql = "SELECT p.*, m.nombre_modulo 
-            FROM unexca_db.permisos p
-            LEFT JOIN unexca_db.modulos m ON p.id_modulos = m.id_modulo
-            ORDER BY p.id_permiso ASC";
+                        FROM unexca_db.permisos p
+                        LEFT JOIN unexca_db.modulos m ON p.id_modulos = m.id_modulo
+                        ORDER BY p.id_permiso ASC";
                 $stmt = $pdo->query($sql);
                 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             }

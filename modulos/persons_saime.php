@@ -1,12 +1,10 @@
 <?php
 include '../config/init.php';
-
 $genders = [
     "1" => "Masculino",
     "2" => "Femenino",
     "3" => "Prefiero no Decirlo"
 ];
-
 ?>
 <!DOCTYPE html>
 <html lang="es">
