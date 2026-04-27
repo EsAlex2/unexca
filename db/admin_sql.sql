@@ -280,10 +280,10 @@ INSERT INTO unexca_db.tipos_usuario (nombre_tipo, descripcion) VALUES
 INSERT INTO unexca_db.pnf (id_sede, cod_pnf, nombre_pnf, descripcion, duracion_pnf, unidad_total_creditos) VALUES
 (1, 'PNF-ADM', 'PNF en Administración', 'Formación en gestión y dirección de organizaciones.', 4, 180),
 (1, 'PNF-CP', 'PNF en Contaduría Pública', 'Formación en sistemas de información contable y financiera.', 4, 185),
-(2, 'PNF-DL', 'PNF en Distribución y Logística', 'Gestión de cadenas de suministro y procesos logísticos.', 4, 175),
-(3, 'PNF-EE', 'PNF en Educación Especial | Lenguaje de señas', 'Especialización en atención a la diversidad y comunicación inclusiva.', 4, 170),
+(1, 'PNF-DL', 'PNF en Distribución y Logística', 'Gestión de cadenas de suministro y procesos logísticos.', 4, 175),
+(1, 'PNF-EE', 'PNF en Educación Especial | Lenguaje de señas', 'Especialización en atención a la diversidad y comunicación inclusiva.', 4, 170),
 (1, 'PNF-INF', 'PNF en Ingeniería Informática', 'Desarrollo de software, redes y soluciones tecnológicas.', 4, 190),
-(4, 'PNF-TUR', 'PNF en Turismo', 'Gestión de servicios turísticos y desarrollo sustentable.', 4, 165);
+(1, 'PNF-TUR', 'PNF en Turismo', 'Gestión de servicios turísticos y desarrollo sustentable.', 4, 165);
 
 INSERT INTO unexca_db.trayectos (cod_trayecto, descripcion) VALUES
 ('T-I', 'Trayecto Inicial, cursos introductorios'),
@@ -446,3 +446,21 @@ VALUES
 ('Certificado de Participación OPSU', 'Nuevo Ingreso', 'Comprobante de registro en el Sistema Nacional de Ingreso a la Educación Universitaria.', TRUE),
 ('Fotos tipo Carnet', 'Nuevo Ingreso', 'Dos (02) fotos recientes de frente, tamaño carnet.', FALSE),
 ('Constancia de Residencia', 'Nuevo Ingreso', 'Documento que valide la dirección de domicilio del aspirante.', FALSE);
+
+INSERT INTO unexca_db.sedes_unexca (nombre_sede, correo_institucional, direccion) 
+VALUES 
+(
+    'Sede Altagracia ', 
+    'sede.altagracia@unexca.edu.ve', 
+    'Esquina de Mijares a Altagracia, Parroquia Altagracia, Caracas.'
+),
+(
+    'Sede La Urbina', 
+    'sede.laurbina@unexca.edu.ve', 
+    'Calle 3-B con Calle 2-B, Urbanización La Urbina, Parroquia Petare.'
+),
+(
+    'Sede La Floresta (Principal)', 
+    'sede.lafloresta@unexca.edu.ve', 
+    'La Floresta, Ave. principal, cruce con Ave. Francisco de Miranda.'
+);

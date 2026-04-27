@@ -31,8 +31,6 @@ include '../config/init.php';
             <?php else: ?>
                 <p>Explora las secciones disponibles en el menú lateral para gestionar tus tareas.</p>
             <?php endif; ?>
-
-            <?php include '../views/components/dashboard_component.php' ?>
         </div>
     </main>
 
