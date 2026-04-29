@@ -1,6 +1,6 @@
 <?php
-include '../config/init.php';
-include '../config/db.php';
+include __DIR__ . '/../config/init.php';
+include __DIR__ . '/../config/db.php';
 
 //====================================================//
 // Obtenemos las carreras y las mostramos en la tabla //

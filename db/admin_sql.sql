@@ -286,7 +286,7 @@ INSERT INTO unexca_db.pnf (id_sede, cod_pnf, nombre_pnf, descripcion, duracion_p
 (1, 'PNF-TUR', 'PNF en Turismo', 'Gestión de servicios turísticos y desarrollo sustentable.', 4, 165);
 
 INSERT INTO unexca_db.trayectos (cod_trayecto, descripcion) VALUES
-('T-I', 'Trayecto Inicial, cursos introductorios'),
+('T-I', 'Trayecto Inicial'),
 ('1-1', 'Trayecto 1, semetre 1'),
 ('1-2', 'Trayecto 1, semetre 2 '),
 ('2-1', 'Trayecto 2, semetre 1'),

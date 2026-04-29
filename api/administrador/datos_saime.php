@@ -66,7 +66,6 @@ switch ($method) {
 
             $campos_requeridos = [
                 'cedula_identidad',
-                //'id_estatus',
                 'nombres',
                 'apellidos',
                 'genero',

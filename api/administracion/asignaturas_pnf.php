@@ -8,24 +8,28 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         try {
-            if (isset($_GET['id_asignatura'])) {
-                $asignatura = filter_input(INPUT_GET, 'id_asignatura', FILTER_VALIDATE_INT);
+
+            $path = isset($_SERVER['PATH_INFO']) ? trim($_SERVER['PATH_INFO'], '/') : null;
+
+            if (isset($path)) {
+
+                $asignatura = filter_input($path, 'codigo', FILTER_UNSAFE_RAW);
                 /*
                 si el get envia una el id no valido, mostrara un error en pantalla.
                 */
                 if (!$asignatura) {
                     http_response_code(400);
-                    echo json_encode(["error" => "ID de asignatura no válido"]);
+                    echo json_encode(["error" => "Codigo de asignatura no válido"]);
                     break;
                 }
                 /*
                 creamos un query para buscar y mostrar la asignatura almacenada en base de datos mientras exista la asignatura seleccionada.
                 */
-                $stmt = $pdo->prepare("SELECT id_asignatura, id_pnf, id_trayecto, codigo, nombre, unidades_credito
+                $stmt = $pdo->prepare("SELECT id_asignatura, id_pnf, id_trayecto, codigo, nombre, unidades_credito, id_caracter
                                        FROM unexca_db.asignatura
                                        WHERE id_asignatura = :id_asignatura");
 
-                $stmt->execute(['id_asignatura' => $asignatura]);
+                $stmt->execute(['codigo' => $asignatura]);
                 $checkExist = $stmt->fetch(PDO::FETCH_ASSOC);
                 if ($checkExist) {
                     echo json_encode($checkExist);
@@ -60,7 +64,7 @@ switch ($method) {
             $json = file_get_contents('php://input');
             $input = json_decode($json, true);
 
-            $campos_requeridos = ['id_pnf', 'id_trayecto', 'codigo', 'nombre', 'unidades_credito'];
+            $campos_requeridos = ['id_pnf', 'id_trayecto', 'codigo', 'nombre', 'unidades_credito', 'id_caracter'];
             foreach ($campos_requeridos as $campo) {
                 if (empty(trim((string) ($input[$campo] ?? '')))) {
                     http_response_code(400);
@@ -86,8 +90,8 @@ switch ($method) {
             /*
              * insertamos lo datos enviados del usuario a la base de datos y enviamos un mensaje de exito si fue un 201.
              */
-            $sql = "INSERT INTO unexca_db.asignatura (id_pnf, id_trayecto, codigo, nombre, unidades_credito)
-                VALUES (:id_pnf, :id_trayecto, :codigo, :nombre, :unidades_credito)";
+            $sql = "INSERT INTO unexca_db.asignatura (id_pnf, id_trayecto, codigo, nombre, unidades_credito, id_caracter)
+                VALUES (:id_pnf, :id_trayecto, :codigo, :nombre, :unidades_credito, :id_caracter)";
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
@@ -95,33 +99,38 @@ switch ($method) {
                 'id_trayecto' => trim($input['id_trayecto']),
                 'codigo' => trim($input['codigo']),
                 'nombre' => trim($input['nombre']),
-                'unidades_credito' => trim($input['unidades_credito'])
+                'unidades_credito' => trim($input['unidades_credito']),
+                'id_caracter' => trim($input['id_caracter'])
             ]);
 
             http_response_code(201);
             echo json_encode(["message" => "Asignatura creada exitosamente"]);
 
         } catch (PDOException $e) {
-            error_log($e->getMessage());
             http_response_code(500);
-            echo json_encode(["error" => "Error interno al crear la asignatura"]);
+            echo json_encode([
+                "error" => "Error de base de datos",
+                "detalles" => $e->getMessage() // Esto te dirá si falta una columna o hay error de FK
+            ]);
         }
         break;
 
     case "PUT":
 
+        $path = isset($_SERVER['PATH_INFO']) ? trim($_SERVER['PATH_INFO'], '/') : null;
+
         $input = json_decode(file_get_contents('php://input'), true);
 
-        $id_asignatura = filter_input(INPUT_GET, 'id_asignatura', FILTER_VALIDATE_INT);
+        $id_asignatura = filter_input($path, 'codigo', FILTER_UNSAFE_RAW);
 
         if (!$id_asignatura) {
             http_response_code(400);
-            echo json_encode(["error" => "El ID de la asignatura no es válido"]);
+            echo json_encode(["error" => "El codigo de la asignatura no es válido"]);
             break;
         }
 
-        $checkExist = $pdo->prepare("SELECT id_asignatura FROM unexca_db.asignatura WHERE id_asignatura = :id");
-        $checkExist->execute(['id' => $id_asignatura]);
+        $checkExist = $pdo->prepare("SELECT codigo FROM unexca_db.asignatura WHERE codigo = :cod");
+        $checkExist->execute(['cod' => $id_asignatura]);
         if (!$checkExist->fetch()) {
             http_response_code(404);
             echo json_encode(["error" => "Asignatura no encontrada"]);
@@ -133,7 +142,8 @@ switch ($method) {
             'id_trayecto',
             'codigo',
             'nombre',
-            'unidades_credito'
+            'unidades_credito',
+            'id_caracter'
         ];
         foreach ($campos_requeridos as $campo) {
             if (!isset($input[$campo]) || strlen(trim((string) $input[$campo])) === 0) {
@@ -165,7 +175,8 @@ switch ($method) {
                         id_trayecto = :id_trayecto,
                         codigo = :codigo,
                         nombre = :nombre,
-                        unidades_credito = :unidades_credito
+                        unidades_credito = :unidades_credito,
+                        id_caracter = :caracter
                     WHERE id_asignatura = :id";
 
             $params = [
@@ -174,6 +185,7 @@ switch ($method) {
                 'codigo' => trim($input['codigo']),
                 'nombre' => trim($input['nombre']),
                 'unidades_credito' => (int) $input['unidades_credito'],
+                'id_caracter' => (int) $input['id_caracter'],
                 'id' => $id_asignatura
             ];
 

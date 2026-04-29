@@ -35,6 +35,11 @@
                     <span class="link-text">Programas Nacional de Formación</span>
                 </a>
 
+                <a href="/unexca/modulos/subject.php" class="nav-link shadow-none">
+                    <i class="bi bi-card-checklist"></i>
+                    <span class="link-text">Cursos</span>
+                </a>
+
                 <a href="#adminSubmenu" data-bs-toggle="collapse" aria-expanded="false" class="nav-link dropdown-toggle shadow-none">
                     <i class="bi bi-shield-lock"></i> <span class="link-text">Administración</span>
                 </a>

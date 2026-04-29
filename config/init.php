@@ -1,9 +1,8 @@
-<?php 
+<?php
 session_start();
 
 $current_page = basename($_SERVER['PHP_SELF']);
 $login_page = 'index.php';
-
 
 if ($current_page !== $login_page) {
     if (!isset($_SESSION['id_usuario'])) {
@@ -17,7 +16,8 @@ define('BASE_URL', 'http://localhost/unexca/public/');
 define('MODULO_ESTUDIANTES', 'modulos/students.php');
 define('MODULO_ROLES', 'modulos/roles.php');
 define('MODULO_USUARIOS', 'modulos/users.php');
-define('DASHBOARD_PRINCIPAL', 'dashboard.php'); 
+define('CREACION_USUARIOS', 'modulos/create_users.php');
+define('DASHBOARD_PRINCIPAL', 'dashboard.php');
 define('LOGIN_PAGE', 'index.php');
 define('MODULO_PERSONAS', 'modulos/persons_saime.php');
 define('MODULO_PERMISOS', 'modulos/permissions.php');
@@ -30,13 +30,14 @@ $pages = [
     DASHBOARD_PRINCIPAL => 'Panel de Control - UNEXCA',
     LOGIN_PAGE => 'Inicio de Sesión - UNEXCA',
     MODULO_PERSONAS => 'Gestión de Personas',
-    MODULO_PERMISOS => 'Geston de Permisos'
+    MODULO_PERMISOS => 'Geston de Permisos',
+    CREACION_USUARIOS => 'Registro de Usuarios'
 ];
 
 $page_title = SITE_NAME;
 
 foreach ($pages as $ruta => $titulo) {
-    if (strpos($_SERVER['PHP_SELF'], $ruta) !== false) {
+    if (basename($_SERVER['PHP_SELF']) === basename($ruta)) {
         $page_title = $titulo;
         break;
     }
