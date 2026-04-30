@@ -2,5 +2,10 @@
 // 1. VARIABLES Y CONFIGURACIÓN INICIAL
 // ==========================================
 $(document).ready(function () {
-    
+
+    // ===================================================
+    // 2. Funcion para cargar el caracter de la asignatura
+    // ===================================================
+
+
 });

@@ -1,5 +1,5 @@
 <?php
-include '../config/init.php';
+include __DIR__ . '/../config/init.php';
 $genders = [
     "1" => "Masculino",
     "2" => "Femenino",

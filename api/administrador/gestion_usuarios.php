@@ -161,7 +161,7 @@ switch ($method) {
 
         if (!$cedula_url) {
             http_response_code(400);
-            die(json_encode(["error" => "No hay cédula en la URL"]));
+            die(json_encode(["error" => "Debe ingresar la cedula"]));
         }
 
         try {

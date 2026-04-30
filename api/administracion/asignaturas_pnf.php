@@ -8,54 +8,31 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         try {
-
             $path = isset($_SERVER['PATH_INFO']) ? trim($_SERVER['PATH_INFO'], '/') : null;
 
-            if (isset($path)) {
+            if ($path) {
+                $asignatura_codigo = htmlspecialchars($path);
 
-                $asignatura = filter_input($path, 'codigo', FILTER_UNSAFE_RAW);
-                /*
-                si el get envia una el id no valido, mostrara un error en pantalla.
-                */
-                if (!$asignatura) {
-                    http_response_code(400);
-                    echo json_encode(["error" => "Codigo de asignatura no válido"]);
-                    break;
-                }
-                /*
-                creamos un query para buscar y mostrar la asignatura almacenada en base de datos mientras exista la asignatura seleccionada.
-                */
                 $stmt = $pdo->prepare("SELECT id_asignatura, id_pnf, id_trayecto, codigo, nombre, unidades_credito, id_caracter
-                                       FROM unexca_db.asignatura
-                                       WHERE id_asignatura = :id_asignatura");
+                                   FROM unexca_db.asignatura
+                                   WHERE codigo = :codigo");
 
-                $stmt->execute(['codigo' => $asignatura]);
-                $checkExist = $stmt->fetch(PDO::FETCH_ASSOC);
-                if ($checkExist) {
-                    echo json_encode($checkExist);
+                $stmt->execute(['codigo' => $asignatura_codigo]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($result) {
+                    echo json_encode($result);
                 } else {
                     http_response_code(404);
                     echo json_encode(["error" => "Asignatura no encontrada"]);
                 }
-
-                /*
-                sino ha sido seleccionado la cedula del estudiante, muestrame todos los estudiantes almacenados en la base de datos.
-                */
-
             } else {
-                $stmt = $pdo->query("SELECT id_asignatura, id_pnf, id_trayecto, codigo, nombre, unidades_credito FROM unexca_db.asignatura");
-                $asignaturas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                echo json_encode($asignaturas);
+                $stmt = $pdo->query("SELECT * FROM unexca_db.asignatura");
+                echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
             }
         } catch (PDOException $e) {
-            /*
-            en caso de un error en la busqueda de las asignaturas, captura el error y muestralo en pantalla.
-            */
             http_response_code(500);
-            echo json_encode([
-                "error" => "Error de base de datos",
-                "detalles" => $e->getMessage()
-            ]);
+            echo json_encode(["error" => $e->getMessage()]);
         }
         break;
 
@@ -105,7 +82,6 @@ switch ($method) {
 
             http_response_code(201);
             echo json_encode(["message" => "Asignatura creada exitosamente"]);
-
         } catch (PDOException $e) {
             http_response_code(500);
             echo json_encode([
@@ -116,94 +92,92 @@ switch ($method) {
         break;
 
     case "PUT":
-
+        // 1. Obtener el código de la asignatura desde el final de la URL
         $path = isset($_SERVER['PATH_INFO']) ? trim($_SERVER['PATH_INFO'], '/') : null;
+        $json = file_get_contents('php://input');
+        $input = json_decode($json, true);
 
-        $input = json_decode(file_get_contents('php://input'), true);
-
-        $id_asignatura = filter_input($path, 'codigo', FILTER_UNSAFE_RAW);
-
-        if (!$id_asignatura) {
+        // Validar que el código esté presente en la URL
+        if (!$path) {
             http_response_code(400);
-            echo json_encode(["error" => "El codigo de la asignatura no es válido"]);
+            echo json_encode(["error" => "Debe proporcionar el código de la asignatura"]);
             break;
         }
 
-        $checkExist = $pdo->prepare("SELECT codigo FROM unexca_db.asignatura WHERE codigo = :cod");
-        $checkExist->execute(['cod' => $id_asignatura]);
-        if (!$checkExist->fetch()) {
-            http_response_code(404);
-            echo json_encode(["error" => "Asignatura no encontrada"]);
-            break;
-        }
-
-        $campos_requeridos = [
-            'id_pnf',
-            'id_trayecto',
-            'codigo',
-            'nombre',
-            'unidades_credito',
-            'id_caracter'
-        ];
-        foreach ($campos_requeridos as $campo) {
-            if (!isset($input[$campo]) || strlen(trim((string) $input[$campo])) === 0) {
-                http_response_code(400);
-                echo json_encode(["error" => "El campo '$campo' es obligatorio."]);
-                exit;
-            }
-        }
-
-        $checkDup = $pdo->prepare("SELECT id_asignatura FROM unexca_db.asignatura 
-                           WHERE (codigo = :c OR nombre = :n) 
-                           AND id_asignatura != :id");
-        $checkDup->execute([
-            'c' => $input['codigo'],
-            'n' => $input['nombre'],
-            'id' => $id_asignatura
-        ]);
-
-        if ($checkDup->fetch()) {
-            http_response_code(409);
-            echo json_encode(["error" => "El código ya está en uso por otra asignatura."]);
-            break;
-        }
+        $codigo_url = htmlspecialchars($path);
 
         try {
+            // 2. Verificar si la asignatura existe y obtener su ID primario
+            $checkExist = $pdo->prepare("SELECT id_asignatura FROM unexca_db.asignatura WHERE codigo = :cod_url");
+            $checkExist->execute(['cod_url' => $codigo_url]);
+            $asignatura_actual = $checkExist->fetch(PDO::FETCH_ASSOC);
 
+            if (!$asignatura_actual) {
+                http_response_code(404);
+                echo json_encode(["error" => "La asignatura con código '$codigo_url' no existe."]);
+                break;
+            }
+
+            $id_asignatura_interna = $asignatura_actual['id_asignatura'];
+
+            // 3. Validar que todos los campos necesarios vengan en el JSON
+            $campos_requeridos = ['id_pnf', 'id_trayecto', 'codigo', 'nombre', 'unidades_credito', 'id_caracter'];
+            foreach ($campos_requeridos as $campo) {
+                if (!isset($input[$campo]) || strlen(trim((string) $input[$campo])) === 0) {
+                    http_response_code(400);
+                    echo json_encode(["error" => "El campo '$campo' es obligatorio para la actualización."]);
+                    exit;
+                }
+            }
+
+            // 4. Verificar si el NUEVO código o nombre ya lo tiene OTRA asignatura (evitar duplicados)
+            $checkDup = $pdo->prepare("SELECT id_asignatura FROM unexca_db.asignatura 
+                                       WHERE (codigo = :c OR nombre = :n) 
+                                       AND id_asignatura != :id");
+            $checkDup->execute([
+                'c' => trim($input['codigo']),
+                'n' => trim($input['nombre']),
+                'id' => $id_asignatura_interna
+            ]);
+
+            if ($checkDup->fetch()) {
+                http_response_code(409);
+                echo json_encode(["error" => "El nuevo código o nombre ya pertenece a otra asignatura."]);
+                break;
+            }
+
+            // 5. Ejecutar la actualización final
             $sql = "UPDATE unexca_db.asignatura
                     SET id_pnf = :id_pnf,
                         id_trayecto = :id_trayecto,
-                        codigo = :codigo,
+                        codigo = :codigo_nuevo,
                         nombre = :nombre,
-                        unidades_credito = :unidades_credito,
-                        id_caracter = :caracter
-                    WHERE id_asignatura = :id";
-
-            $params = [
-                'id_pnf' => (int) $input['id_pnf'],
-                'id_trayecto' => (int) $input['id_trayecto'],
-                'codigo' => trim($input['codigo']),
-                'nombre' => trim($input['nombre']),
-                'unidades_credito' => (int) $input['unidades_credito'],
-                'id_caracter' => (int) $input['id_caracter'],
-                'id' => $id_asignatura
-            ];
+                        unidades_credito = :uc,
+                        id_caracter = :caracter,
+                        actualizado_en = NOW()
+                    WHERE id_asignatura = :id_original";
 
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
+            $stmt->execute([
+                'id_pnf'         => (int) $input['id_pnf'],
+                'id_trayecto'    => (int) $input['id_trayecto'],
+                'codigo_nuevo'   => trim($input['codigo']),
+                'nombre'         => trim($input['nombre']),
+                'uc'             => (int) $input['unidades_credito'],
+                'caracter'       => (int) $input['id_caracter'],
+                'id_original'    => $id_asignatura_interna
+            ]);
 
-            echo json_encode(["message" => "Asignatura ha sido actualizada con éxito"]);
-
+            echo json_encode([
+                "message" => "Asignatura '$codigo_url' actualizada con éxito",
+                "detalles" => "Se ha guardado como " . $input['codigo']
+            ]);
         } catch (PDOException $e) {
             http_response_code(500);
-            echo json_encode(["error" => "Error en la base de datos"]);
+            echo json_encode([
+                "error" => "Error de base de datos al actualizar",
+                "detalles" => $e->getMessage()
+            ]);
         }
         break;
-
-    default:
-        http_response_code(405);
-        echo json_encode(["error" => "Método no permitido"]);
-        break;
-
 }
-

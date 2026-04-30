@@ -1,5 +1,11 @@
 <?php
 include __DIR__ . '/../config/init.php';
+include __DIR__ . '/../config/db.php';
+
+$sql = $pdo->prepare("SELECT * FROM unexca_db.trayectos");
+$sql->execute();
+$trayectos = $sql->fetchAll();
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -38,7 +44,7 @@ include __DIR__ . '/../config/init.php';
 
                                 <div class="row g-3">
                                     <div class="col-md-4">
-                                        <label for="codigo" class="form-label">Código del Curso</label>
+                                        <label for="codigo" class="form-label">Código de la asignatura</label>
                                         <input type="text" class="form-control" id="codigo" name="codigo"
                                             placeholder="Ej: MAT-101" required>
                                     </div>
@@ -49,38 +55,30 @@ include __DIR__ . '/../config/init.php';
                                             placeholder="Ej: Cálculo Diferencial" required>
                                     </div>
 
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <label for="unidades_credito" class="form-label">U.C. (Créditos)</label>
                                         <input type="number" class="form-control" id="unidades_credito"
                                             name="unidades_credito" min="1" max="10" value="3" required>
                                     </div>
 
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
+
                                         <label for="semestre" class="form-label">Semestre / Trayecto</label>
-                                        <select class="form-select" id="semestre" name="semestre" required>
-                                            <option value="" selected disabled>Seleccione...</option>
-                                            <option value="1">1°</option>
-                                            <option value="2">2°</option>
-                                            <option value="3">3°</option>
-                                            <option value="4">4°</option>
-                                            <option value="5">5°</option>
-                                        </select>
+                                        <?php if (!empty($trayectos)): ?>
+                                            <select class="form-select" id="trayectos" name="semestre" required>
+                                                <option value="" selected disabled>Seleccione...</option>
+                                                <?php foreach ($trayectos as $items): ?>
+                                                    <option value="<?php $items['id_trayecto'] ?>"><?php echo $items['descripcion'] ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        <?php endif; ?>
                                     </div>
 
-                                    <div class="col-md-6">
-                                        <label class="form-label">Carácter de la Materia</label>
-                                        <div class="d-flex gap-3 pt-1">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="tipo"
-                                                    id="obligatoria" value="obligatoria" checked>
-                                                <label class="form-check-label" for="obligatoria">Obligatoria</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="tipo" id="electiva"
-                                                    value="electiva">
-                                                <label class="form-check-label" for="electiva">Electiva</label>
-                                            </div>
-                                        </div>
+                                    <div class="col-md-4">
+                                        <label for="caracterMateria" class="form-label">Carácter de la Materia</label>
+                                        <select class="form-select" name="tipo" id="caracterMateria">
+                                            <option value="" selected disabled>Cargando..</option>
+                                        </select>
                                     </div>
 
                                     <div class="col-12">
