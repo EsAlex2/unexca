@@ -2,9 +2,27 @@
 include __DIR__ . '/../config/init.php';
 include __DIR__ . '/../config/db.php';
 
+//========================================================
+//  Modulo para la creacion de asignaturas
+//========================================================
+
+// Sql para buscar y mostrar todos los trayectos
+//========================================================
 $sql = $pdo->prepare("SELECT * FROM unexca_db.trayectos");
 $sql->execute();
 $trayectos = $sql->fetchAll();
+
+//sql para buscar y mostrar el caracter de las asignaturas = modular o anual
+//========================================================
+$sql_caracter = $pdo->prepare("SELECT * FROM unexca_db.caracter_asignatura");
+$sql_caracter->execute();
+$caracter = $sql_caracter->fetchAll();
+
+//sql para buscar y mostrar las carreras ingresadas en la base de datos
+//========================================================
+$sql_pnf = $pdo->prepare("SELECT * FROM unexca_db.pnf");
+$sql_pnf->execute();
+$pnf = $sql_pnf->fetchAll();
 
 ?>
 <!DOCTYPE html>
@@ -39,8 +57,7 @@ $trayectos = $sql->fetchAll();
                                 Asignatura</h6>
                         </div>
                         <div class="card-body p-4">
-                            <form id="formRegistroCurso" action="../controllers/CursosController.php?action=save"
-                                method="POST">
+                            <form id="formRegistroCurso">
 
                                 <div class="row g-3">
                                     <div class="col-md-4">
@@ -49,10 +66,24 @@ $trayectos = $sql->fetchAll();
                                             placeholder="Ej: MAT-101" required>
                                     </div>
 
-                                    <div class="col-md-8">
+                                    <div class="col-md-4">
                                         <label for="nombre" class="form-label">Nombre de la Asignatura</label>
                                         <input type="text" class="form-control" id="nombre" name="nombre"
                                             placeholder="Ej: Cálculo Diferencial" required>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label for="pnf" class="form-label">Programa Nacional de Formacion</label>
+                                        <?php if (!empty($pnf)): ?>
+                                            <select class="form-select" id="pnf" name="pnf" required>
+                                                <option value="" selected disabled>Seleccione...</option>
+                                                <?php foreach ($pnf as $p): ?>
+                                                    <option value="<?php $p['id_pnf'] ?>">
+                                                        <?php echo $p['nombre_pnf'] ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        <?php endif; ?>
                                     </div>
 
                                     <div class="col-md-4">
@@ -62,13 +93,14 @@ $trayectos = $sql->fetchAll();
                                     </div>
 
                                     <div class="col-md-4">
-
                                         <label for="semestre" class="form-label">Semestre / Trayecto</label>
                                         <?php if (!empty($trayectos)): ?>
                                             <select class="form-select" id="trayectos" name="semestre" required>
                                                 <option value="" selected disabled>Seleccione...</option>
                                                 <?php foreach ($trayectos as $items): ?>
-                                                    <option value="<?php $items['id_trayecto'] ?>"><?php echo $items['descripcion'] ?></option>
+                                                    <option value="<?php $items['id_trayecto'] ?>">
+                                                        <?php echo $items['descripcion'] ?>
+                                                    </option>
                                                 <?php endforeach; ?>
                                             </select>
                                         <?php endif; ?>
@@ -76,9 +108,16 @@ $trayectos = $sql->fetchAll();
 
                                     <div class="col-md-4">
                                         <label for="caracterMateria" class="form-label">Carácter de la Materia</label>
-                                        <select class="form-select" name="tipo" id="caracterMateria">
-                                            <option value="" selected disabled>Cargando..</option>
-                                        </select>
+                                        <?php if (!empty($caracter)): ?>
+                                            <select class="form-select" name="tipo" id="caracterMateria">
+                                                <option value="" selected disabled>Seleccione..</option>
+                                                <?php foreach ($caracter as $c): ?>
+                                                    <option value="<?php $c['id'] ?>">
+                                                        <?php echo $c['nombre'] ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        <?php endif; ?>
                                     </div>
 
                                     <div class="col-12">
@@ -117,7 +156,8 @@ $trayectos = $sql->fetchAll();
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    
+    <script src="/unexca/public/js/subject.js"></script>
     <script src="/unexca/public/js/sidebar.js"></script>
     <script src="/unexca/public/js/auth.js"></script>
 </body>

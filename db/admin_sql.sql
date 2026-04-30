@@ -184,6 +184,13 @@ CREATE TABLE unexca_db.expediente_estudiante (
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE unexca_db.caracter_asignatura (
+	id SERIAL PRIMARY KEY,
+	nombre VARCHAR NOT NULL,
+	descripcion TEXT NOT NULL,
+	creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);	
+
 CREATE TABLE unexca_db.asignatura (
     id_asignatura SERIAL PRIMARY KEY,
     id_pnf INTEGER REFERENCES unexca_db.pnf(id_pnf) ON DELETE CASCADE,
