@@ -198,6 +198,7 @@ CREATE TABLE unexca_db.asignatura (
     codigo VARCHAR(20) UNIQUE NOT NULL,
     nombre VARCHAR(100) NOT NULL,
     unidades_credito INTEGER NOT NULL,
+    id_caracter INTEGER REFERENCES unexca_db.caracter_asignatura(id) ON DELETE CASCADE,
     creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP
 );

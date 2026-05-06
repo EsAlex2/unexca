@@ -79,7 +79,7 @@ $pnf = $sql_pnf->fetchAll();
                                                 <option value="" selected disabled>Seleccione...</option>
                                                 <?php foreach ($pnf as $p): ?>
                                                     <option value="<?php $p['id_pnf'] ?>">
-                                                        <?php echo $p['nombre_pnf'] ?>
+                                                        <?php echo $p['cod_pnf']." - ".$p['nombre_pnf'] ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
