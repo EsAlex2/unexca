@@ -18,12 +18,6 @@ $sql_caracter = $pdo->prepare("SELECT * FROM unexca_db.caracter_asignatura");
 $sql_caracter->execute();
 $caracter = $sql_caracter->fetchAll();
 
-//sql para buscar y mostrar las carreras ingresadas en la base de datos
-//========================================================
-$sql_pnf = $pdo->prepare("SELECT * FROM unexca_db.pnf");
-$sql_pnf->execute();
-$pnf = $sql_pnf->fetchAll();
-
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -74,16 +68,9 @@ $pnf = $sql_pnf->fetchAll();
 
                                     <div class="col-md-4">
                                         <label for="pnf" class="form-label">Programa Nacional de Formacion</label>
-                                        <?php if (!empty($pnf)): ?>
-                                            <select class="form-select" id="pnf" name="pnf" required>
-                                                <option value="" selected disabled>Seleccione...</option>
-                                                <?php foreach ($pnf as $p): ?>
-                                                    <option value="<?php $p['id_pnf'] ?>">
-                                                        <?php echo $p['cod_pnf']." - ".$p['nombre_pnf'] ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        <?php endif; ?>
+                                        <select class="form-select" id="pnf" name="pnf" required>
+                                            <option value="" selected disabled>Seleccione...</option>
+                                        </select>
                                     </div>
 
                                     <div class="col-md-4">
@@ -156,7 +143,7 @@ $pnf = $sql_pnf->fetchAll();
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <script src="/unexca/public/js/subject.js"></script>
     <script src="/unexca/public/js/sidebar.js"></script>
     <script src="/unexca/public/js/auth.js"></script>

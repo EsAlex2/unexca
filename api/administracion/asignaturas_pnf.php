@@ -50,6 +50,7 @@ switch ($method) {
                 }
             }
 
+
             /*
              * validacion de codigo y correo que no esten registrados en la base de datos
              * prepraramos una consulta a la base de datos, seleccionamos y contamos los usuarios mientras la cedula o correo ingresada por el usuario
