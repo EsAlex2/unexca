@@ -1,7 +1,43 @@
-// ==========================================
-// 1. VARIABLES Y CONFIGURACIÓN INICIAL
-// ==========================================
+
 $(document).ready(function () {
+
+    // ==========================================
+    // Creación de la tabla de asignaturas
+    // ==========================================
+
+    const tablaAsignaturas = $("#tablaAsignaturas").DataTable({
+        ajax: {
+            url: "../api/administrador/asignaturas_pnf.php",
+            dataSrc: "",
+            cache: false,
+            error: function (xhr) {
+                console.error("Error en la carga de la tabla:", xhr.responseText);
+            },
+        },
+        columns: [
+            { data: null, render: (data) => `<strong>${data.codigo}</strong>` },
+            { data: null, render: (data) => `<span class="text-uppercase">${data.nombre}</span>` },
+            { data: "pnf" },
+            { data: "trayecto" },
+            { data: "unidades_credito" },
+            {
+                data: null, render: function (data, type, row) {
+                    return `
+                    <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${row.id_asignatura}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${row.id_asignatura}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                `;
+                }
+            }
+        ]
+    });
+
+    // ==========================================
+    // FUNCIONES PARA CARGAR PNF Y TRAYECTOS
+    // ==========================================
 
     async function cargarPnf() {
         const select = $("#pnf");
@@ -19,9 +55,31 @@ $(document).ready(function () {
         }
     }
 
-    //ejecucion de los pnf
-    cargarPnf()
+    async function cargarTrayectosBd() {
+        const select2 = $("#trayectos");
 
+        try {
+            const res2 = await fetch("../api/administracion/views_trayectos.php");
+            const trayectos = await res2.json();
+
+            select2.empty().append('<option value="" selected disabled>Seleccione un Trayecto...</option>');
+            trayectos.forEach((trayecto) => {
+                select2.append(`<option value="${trayecto.id_trayecto}">${trayecto.descripcion}</option>`);
+            });
+        } catch (error) {
+            console.error("Error para cargar trayectos:", error);
+            select2.html('<option value="">Error al cargar trayectos</option>');
+
+        }
+    }
+
+    //ejecucion de los pnf y trayectos
+    cargarPnf();
+    cargarTrayectosBd();
+
+    // ==========================================
+    // Registro de asignaturas
+    // ==========================================
 
     $("#formRegistroCurso").on("submit", function (e) {
         e.preventDefault();

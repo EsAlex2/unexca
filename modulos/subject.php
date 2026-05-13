@@ -6,12 +6,6 @@ include __DIR__ . '/../config/db.php';
 //  Modulo para la creacion de asignaturas
 //========================================================
 
-// Sql para buscar y mostrar todos los trayectos
-//========================================================
-$sql = $pdo->prepare("SELECT * FROM unexca_db.trayectos");
-$sql->execute();
-$trayectos = $sql->fetchAll();
-
 //sql para buscar y mostrar el caracter de las asignaturas = modular o anual
 //========================================================
 $sql_caracter = $pdo->prepare("SELECT * FROM unexca_db.caracter_asignatura");
@@ -76,21 +70,14 @@ $caracter = $sql_caracter->fetchAll();
                                     <div class="col-md-4">
                                         <label for="unidades_credito" class="form-label">U.C. (Créditos)</label>
                                         <input type="number" class="form-control" id="unidades_credito"
-                                            name="unidades_credito" min="1" max="10" value="3" required>
+                                            name="unidades_credito" min="1" max="5" value="3" required>
                                     </div>
 
                                     <div class="col-md-4">
-                                        <label for="semestre" class="form-label">Semestre / Trayecto</label>
-                                        <?php if (!empty($trayectos)): ?>
-                                            <select class="form-select" id="trayectos" name="semestre" required>
-                                                <option value="" selected disabled>Seleccione...</option>
-                                                <?php foreach ($trayectos as $items): ?>
-                                                    <option value="<?php $items['id_trayecto'] ?>">
-                                                        <?php echo $items['descripcion'] ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        <?php endif; ?>
+                                        <label for="trayectos" class="form-label">Semestre / Trayecto</label>
+                                        <select class="form-select" id="trayectos" name="trayectos" required>
+                                            <option value="" selected disabled>Seleccione...</option>
+                                        </select>
                                     </div>
 
                                     <div class="col-md-4">
@@ -99,7 +86,7 @@ $caracter = $sql_caracter->fetchAll();
                                             <select class="form-select" name="tipo" id="caracterMateria">
                                                 <option value="" selected disabled>Seleccione..</option>
                                                 <?php foreach ($caracter as $c): ?>
-                                                    <option value="<?php $c['id'] ?>">
+                                                    <option value="<?php echo $c['id'] ?>">
                                                         <?php echo $c['nombre'] ?>
                                                     </option>
                                                 <?php endforeach; ?>
