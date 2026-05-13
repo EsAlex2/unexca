@@ -15,23 +15,8 @@ $(document).ready(function () {
             },
         },
         columns: [
-            { data: null, render: (data) => `<strong>${data.codigo}</strong>` },
-            { data: null, render: (data) => `<span class="text-uppercase">${data.nombre}</span>` },
-            { data: "pnf" },
-            { data: "trayecto" },
-            { data: "unidades_credito" },
-            {
-                data: null, render: function (data, type, row) {
-                    return `
-                    <button class="btn btn-sm btn-outline-primary edit-btn" data-id="${row.id_asignatura}">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${row.id_asignatura}">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                `;
-                }
-            }
+            {data: "codigo"},
+            
         ]
     });
 
